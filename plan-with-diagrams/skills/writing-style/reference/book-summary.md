@@ -9,9 +9,9 @@ exception. The rules in SKILL.md are what you follow; this is why they exist.
 **Stuart West & Lindsay Turnbull**, Oxford University Press (2023)
 *How to Write With Clarity and Impact in the Life Sciences*
 
-> **Scope note:** This summary covers only the preview extract provided (front matter, Chapter 1 "Writing as an Essential Research Skill", and Chapter 2 "Core Skills"). Chapter 2 promises ten tips; nine appear before the extract ends, and the ninth is cut off mid-sentence. Chapters 3–11 (Methods, Results, Figures, Introductions, Discussions, Abstracts, Titles, Cover Letters, Writing and Editing) are not included.
+> **Scope note:** This summary covers only the front matter, Chapter 1 "Writing as an Essential Research Skill", and Chapter 2 "Core Skills". Chapter 2 promises ten tips; nine are summarised here. Chapters 3–11 (Methods, Results, Figures, Introductions, Discussions, Abstracts, Titles, Cover Letters, Writing and Editing) are not included.
 
-The recommendations below are for writing a scientific paper. I included some sentences to adapt them to the case of a model writing a plan proposal (or a feature proposal) that should be read by a human. Please interpret these recommendations in that context, using this mapping:
+The recommendations below are for writing a scientific paper. Read them as advice to a model writing a proposal (for a plan or a feature) that a human will review, using this mapping:
 
 | In the book | Here |
 |---|---|
@@ -49,15 +49,15 @@ The book's single organising idea is that writing exists to serve the reader, no
 
 Although a finished paper is read in a fixed order, the authors recommend writing the sections in the order that is easiest, starting with the parts that require the least interpretation.
 
-
-For example for a scientific paper that would be:
+For example, for a scientific paper that would be:
 - **Start with the Methods.** You are simply describing what you did, so there is no interpretive burden.
 - **Write the Results next.** They follow naturally from the Methods.
 - **Then the Introduction and Discussion.** These are harder, because they need context, links to other published work, and genuine interpretation.
 - **Write the Abstract last**, despite it appearing first in the finished paper. Only once everything else is settled do you know what the story of the paper actually is.
 - **Finish with the Title, the cover letter, and a full editing pass.**
 
-Try to apply this to the case of writing a plan proposal. Specifically the minimalism recommendation is very relevant to our context.
+For a proposal, the same idea applies: draft the parts that need the least interpretation first (files changed, detailed implementation), and write the description and overview last. The minimalism recommendation in [§3.3](#33-keep-it-to-essentials) matters most here.
+
 ---
 
 ## 3. Four General Principles
