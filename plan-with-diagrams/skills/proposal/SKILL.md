@@ -26,7 +26,7 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
 2. **Investigate first.** A proposal is only worth reading if every claim is checked. Before drafting:
     - read the code you propose to change, and note exact `file:line` anchors;
     - verify API claims against the *pinned* version of the dependency, not memory;
-    - check open issues and pull requests that touch the same files (`gh issue list`, `gh pr list`);
+    - check open issues and pull requests that touch the same files (with `gh issue list` and `gh pr list` if the project is on GitHub and `gh` is installed; otherwise ask the user for related issues);
     - look for existing tests and fixtures you can reuse.
 
 3. **Plan the document before you write it.** Bullet what must be covered, then order the bullets. Sketch the diagrams first: they carry the argument, and the text only fills the gaps they leave.
@@ -107,7 +107,7 @@ Use these headings, in this order. Drop a section only if it is genuinely empty,
 
 9. **`## Documentation updates`** — answer *is a doc update needed?* in one line, and name the files.
 
-10. **`## Verifications for agent to run`** — the manual checks and the exact commands (`pytest …`, `pre-commit run --all-files`), including how to get any sample data.
+10. **`## Verifications for agent to run`** — the manual checks and the exact commands the project uses for tests and linting (for example `pytest …`, `pre-commit run --all-files`), including how to get any sample data.
 
 11. **`## Points to discuss`** — a two-column table, so conclusions from the review can be written straight into it:
 

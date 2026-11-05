@@ -38,8 +38,8 @@ The rules condense *Scientific Papers Made Easy* (West & Turnbull, OUP 2023). Re
 ## Sentences
 
 - **What first, then why.** The subject of the sentence is the thing being decided.
-    - ❌ `generate_masks can derive its output path from self.tracking_output_dir and self.input_video_file_root, which prep_outputs already sets — so prep_outputs needs no change either.`
-    - ✅ `prep_outputs needs no change: generate_masks derives its output path from self.tracking_output_dir and self.input_video_file_root, the same way it does already.`
+    - ❌ `load_config can read the new field from settings.yaml, which the CLI already parses — so the CLI needs no change either.`
+    - ✅ `The CLI needs no change: load_config reads the new field from settings.yaml, which the CLI already parses.`
 
 - **Short sentences that make one point.** If a sentence runs past two lines, split it.
 
@@ -60,7 +60,7 @@ The rules condense *Scientific Papers Made Easy* (West & Turnbull, OUP 2023). Re
 - **Let the boxes reach the code.** Add `click` directives, and repeat them as a node → link legend under the diagram:
 
     ```
-    click T1 href "https://github.com/org/repo/blob/main/crabs/tracker/track_video.py#L56" _blank
+    click T1 href "https://github.com/<org>/<repo>/blob/main/src/<pkg>/loader.py#L56" _blank
     ```
 
     Some renderers (GitHub among them) strip `click` for security, so the legend is what guarantees the link is reachable. Ensure that the legend is understandable once rendered (e.g. a node name B may not be visible once rendered).
@@ -69,11 +69,11 @@ The rules condense *Scientific Papers Made Easy* (West & Turnbull, OUP 2023). Re
 
 ## Evidence
 
-- **Be honest about uncertainty.** Say "verified against napari 0.6.6" when you checked. Never present a guess as a finding.
+- **Be honest about uncertainty.** Say "verified against <dependency> <pinned version>" when you checked. Never present a guess as a finding.
 
-- **Anchor every claim.** Link code as `[loader_widgets.py:356](movement/napari/loader_widgets.py#L356)` and issues or PRs as `[#960](https://github.com/org/repo/issues/960)`. Repeat the link each time the number appears.
+- **Anchor every claim.** Link code as `[loader.py:356](src/<pkg>/loader.py#L356)` and issues or PRs as `[#960](https://github.com/<org>/<repo>/issues/960)`. Repeat the link each time the number appears.
 
-- **Pseudocode is allowed** where real code would distract. Keep it in a `python` block with control flow in capitals (`FOR EACH`, `IF`, `skip`) so nobody pastes it.
+- **Pseudocode is allowed** where real code would distract. Keep it in a code block in the project's language, with control flow in capitals (`FOR EACH`, `IF`, `skip`) so nobody pastes it.
 
 - **Small code snippets as diffs** are very useful to quickly communicate a suggested implementation detail.
 
