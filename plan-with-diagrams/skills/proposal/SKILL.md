@@ -24,7 +24,11 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
 
 1. **Enter plan mode.** Call `EnterPlanMode` before touching anything. Load it with `ToolSearch` (`select:EnterPlanMode,ExitPlanMode`) if its schema is not available. Write no code and edit no source files. Plan mode only lets you write its own plan file, so that file is where the proposal is drafted.
 
-2. **Investigate first.** A proposal is only worth reading if every claim is checked. Before drafting:
+2. **Investigate first.** A proposal is only worth reading if every claim is checked.
+
+    Run the `plan-with-diagrams:proposal-investigator` agent with the change to propose. It returns anchored facts, each marked verified or unverified. Read the code behind any fact the proposal will lean on, and carry its *Open questions* into *Points to discuss*.
+
+    If the agent is not available, investigate yourself before drafting:
     - read the code you propose to change, and note exact `file:line` anchors;
     - verify API claims against the *pinned* version of the dependency, not memory;
     - check open issues and pull requests that touch the same files (with `gh issue list` and `gh pr list` if the project is on GitHub and `gh` is installed; otherwise ask the user for related issues);
