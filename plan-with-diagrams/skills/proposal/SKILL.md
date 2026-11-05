@@ -41,13 +41,21 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
 
 ## Publishing for comment
 
-Offer to publish the proposal as an Artifact once the user has the file. It renders the mermaid diagrams, and the user can highlight any part of it and send a comment thread to Claude.
+Offer a way to read the proposal rendered, with its diagrams, and comment on it. Use the first option that is available:
 
-- Publish the `.md` file directly with the `Artifact` tool — this skill is the explicit instruction that makes a Markdown publish correct.
-- Republish to the same URL after every edit, so the rendered document never lags behind the file.
-- Read comment threads with `action: "comments"`, answer with `action: "reply"`, and `action: "resolve"` a thread once the document has been changed to match.
-- Every edit driven by a comment follows *During the discussion* below.
-- Use absolute GitHub URLs (`https://github.com/<org>/<repo>/blob/<branch>/path#L10`) for code anchors if the document will be published or shared. Relative paths only work for a local file.
+- **An Artifact**, if the `Artifact` tool is available in this session.
+    - Publish the saved `.md` file itself. This skill is the explicit instruction that makes a Markdown publish correct.
+    - The artifact is private until the user shares its link. The user can highlight any part of it and send a comment thread to Claude.
+    - Republish the same file path after every edit, so the rendered document never lags behind the file.
+    - Handle comment threads with the `ArtifactComments` tool (load it with `ToolSearch` if only its name is listed). Resolve a thread once the document has been changed to match.
+
+- **GitHub**, if the project is on GitHub and the user agrees to push. A file on a branch, a gist or a draft PR renders mermaid and takes line comments. Never push without asking.
+
+- **Otherwise**, the local file. Most editors can preview Markdown with mermaid.
+
+Every edit driven by a comment follows *During the discussion* below.
+
+Use absolute GitHub URLs (`https://github.com/<org>/<repo>/blob/<branch>/path#L10`) for code anchors if the document will be published or shared. Relative paths only work for a local file.
 
 ## During the discussion
 
