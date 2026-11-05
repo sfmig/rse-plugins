@@ -21,7 +21,7 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
 
 ## Process
 
-1. **Enter plan mode.** Call `EnterPlanMode` before touching anything. Load it with `ToolSearch` (`select:EnterPlanMode,ExitPlanMode`) if its schema is not available. Write no code and edit no source files; the proposal file is the only thing you write.
+1. **Enter plan mode.** Call `EnterPlanMode` before touching anything. Load it with `ToolSearch` (`select:EnterPlanMode,ExitPlanMode`) if its schema is not available. Write no code and edit no source files. Plan mode only lets you write its own plan file, so that file is where the proposal is drafted.
 
 2. **Investigate first.** A proposal is only worth reading if every claim is checked. Before drafting:
     - read the code you propose to change, and note exact `file:line` anchors;
@@ -31,11 +31,11 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
 
 3. **Plan the document before you write it.** Bullet what must be covered, then order the bullets. Sketch the diagrams first: they carry the argument, and the text only fills the gaps they leave.
 
-4. **Draft it.** Follow *Sections* and *Writing rules* below. Use [template.md](template.md) as the skeleton.
+4. **Draft it in the plan file.** Follow *Sections* and *Writing rules* below. Use [template.md](template.md) as the skeleton.
 
-5. **Save it** as `claude-plans/proposal-<short-slug>.md`, unless the user names a path.
+5. **Present it.** Call `ExitPlanMode`. The user sees the proposal itself for approval. Approving it means "the proposal is ready for discussion", not "start implementing".
 
-6. **Present it.** Call `ExitPlanMode` with two or three lines and the file path. Offer to publish it for comment (below). Do not start implementing unless the user asks.
+6. **Save it** once out of plan mode: copy the plan file to `claude-plans/proposal-<short-slug>.md` in the project, unless the user names a path. Tell the user the path and offer to publish it for comment (below). From here on, edit the saved copy, not the plan file. Do not start implementing unless the user asks.
 
 7. **Refine it interactively.** See *During the discussion*.
 
