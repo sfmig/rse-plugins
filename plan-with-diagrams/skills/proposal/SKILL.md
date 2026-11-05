@@ -40,11 +40,17 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
 
 5. **Check the diagrams render.** Run `${CLAUDE_SKILL_DIR}/scripts/check-mermaid.sh <plan file>` and fix every `FAIL`. If it exits with status 2 (no renderer available), say so when presenting and carry on.
 
-6. **Present it.** Call `ExitPlanMode`. The user sees the proposal itself for approval. Approving it means "the proposal is ready for discussion", not "start implementing".
+6. **Review it with fresh eyes.** Run two agents in parallel on the plan file:
+    - `plan-with-diagrams:proposal-cold-reader` returns the questions a first-time reviewer would ask. Fold each answer into the document; move anything you cannot resolve into *Points to discuss*.
+    - `plan-with-diagrams:writing-style-checker` returns writing-rule violations. Fix them all.
 
-7. **Save it** once out of plan mode: copy the plan file to `claude-plans/proposal-<short-slug>.md` in the project, unless the user names a path. Tell the user the path and offer to publish it for comment (below). From here on, edit the saved copy, not the plan file. Do not start implementing unless the user asks.
+    Re-run the diagram check if you changed a diagram.
 
-8. **Refine it interactively.** See *During the discussion*.
+7. **Present it.** Call `ExitPlanMode`. The user sees the proposal itself for approval. Approving it means "the proposal is ready for discussion", not "start implementing".
+
+8. **Save it** once out of plan mode: copy the plan file to `claude-plans/proposal-<short-slug>.md` in the project, unless the user names a path. Tell the user the path and offer to publish it for comment (below). From here on, edit the saved copy, not the plan file. Do not start implementing unless the user asks.
+
+9. **Refine it interactively.** See *During the discussion*.
 
 ## Publishing for comment
 
