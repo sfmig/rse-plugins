@@ -1,9 +1,15 @@
 ---
 name: proposal
-description: Research a change in plan mode, then write a human-reviewable proposal document in GitHub-flavoured Markdown (signatures, diffs, tables, mermaid, collapsible detail). Use when the user asks for a plan, proposal, design doc or RFC to be reviewed by people before any code is written, or types /proposal.
+description: Research a code change in plan mode, then write a proposal document for people to review before any code is written, in GitHub-flavoured Markdown with mermaid diagrams, signatures, diffs and tables.
+when_to_use: Use when the user asks for a proposal, design doc, RFC or "a plan I can review / share / discuss" for a single PR-sized change. Do not use for a quick plan-mode plan the user will approve in the terminal.
+argument-hint: "[change to propose]"
 ---
 
 # Proposal
+
+The change to propose: $ARGUMENTS
+
+If that is empty, ask the user what the change is before doing anything else.
 
 Write **one document per PR**, for a human to read, comment on and discuss before any code is written.
 
