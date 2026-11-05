@@ -1,5 +1,5 @@
 ---
-name: plan-with-diagrams
+name: proposal
 description: Research a change in plan mode, then write a human-reviewable proposal document in GitHub-flavoured Markdown (signatures, diffs, tables, mermaid, collapsible detail). Use when the user asks for a plan, proposal, design doc or RFC to be reviewed by people before any code is written, or types /proposal.
 ---
 
