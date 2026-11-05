@@ -4,7 +4,7 @@
 Claude plugins useful in software development for research.
 
 
-A plugin is a package that bundles several related pieces (here, skills and agents) so they install, update and switch on or off together.
+A plugin is a package that bundles several related pieces (here, skills and subagents) so they install, update and switch on or off together.
 
 
 ## Included skills

@@ -1,5 +1,5 @@
 <!--
-Source for the `## Writing rules` section of SKILL.md. Read this when a rule
+Source for the rules in the writing-style SKILL.md. Read this when a rule
 there needs interpreting, or when deciding whether an unusual document is an
 exception. The rules in SKILL.md are what you follow; this is why they exist.
 -->
