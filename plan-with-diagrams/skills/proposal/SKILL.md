@@ -3,6 +3,7 @@ name: proposal
 description: Research a code change in plan mode, then write a proposal document for people to review before any code is written, in GitHub-flavoured Markdown with mermaid diagrams, signatures, diffs and tables.
 when_to_use: Use when the user asks for a proposal, design doc, RFC or "a plan I can review / share / discuss" for a single PR-sized change. Do not use for a quick plan-mode plan the user will approve in the terminal.
 argument-hint: "[change to propose]"
+allowed-tools: Bash(${CLAUDE_SKILL_DIR}/scripts/check-mermaid.sh *)
 ---
 
 # Proposal
@@ -33,11 +34,13 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
 
 4. **Draft it in the plan file.** Follow *Sections* and *Writing rules* below. Use [template.md](template.md) as the skeleton.
 
-5. **Present it.** Call `ExitPlanMode`. The user sees the proposal itself for approval. Approving it means "the proposal is ready for discussion", not "start implementing".
+5. **Check the diagrams render.** Run `${CLAUDE_SKILL_DIR}/scripts/check-mermaid.sh <plan file>` and fix every `FAIL`. If it exits with status 2 (no renderer available), say so when presenting and carry on.
 
-6. **Save it** once out of plan mode: copy the plan file to `claude-plans/proposal-<short-slug>.md` in the project, unless the user names a path. Tell the user the path and offer to publish it for comment (below). From here on, edit the saved copy, not the plan file. Do not start implementing unless the user asks.
+6. **Present it.** Call `ExitPlanMode`. The user sees the proposal itself for approval. Approving it means "the proposal is ready for discussion", not "start implementing".
 
-7. **Refine it interactively.** See *During the discussion*.
+7. **Save it** once out of plan mode: copy the plan file to `claude-plans/proposal-<short-slug>.md` in the project, unless the user names a path. Tell the user the path and offer to publish it for comment (below). From here on, edit the saved copy, not the plan file. Do not start implementing unless the user asks.
+
+8. **Refine it interactively.** See *During the discussion*.
 
 ## Publishing for comment
 
@@ -70,6 +73,8 @@ The user asks questions about the draft and the document is edited in response. 
 - **Record outcomes in the right-hand column of the *Points to discuss* table.**
 
 - **Re-read the whole section you edited.** An insertion easily breaks general-to-detail order or adds a back-reference to something that is now far away.
+
+- **Re-run the diagram check** after editing a diagram.
 
 ## Writing rules
 
