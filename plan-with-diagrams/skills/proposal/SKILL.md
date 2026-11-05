@@ -31,7 +31,7 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
 
 3. **Plan the document before you write it.** Bullet what must be covered, then order the bullets. Sketch the diagrams first: they carry the argument, and the text only fills the gaps they leave.
 
-4. **Draft it.** Follow *Sections* and *Writing rules* below. Use `reference/template.md` as the skeleton.
+4. **Draft it.** Follow *Sections* and *Writing rules* below. Use [template.md](template.md) as the skeleton.
 
 5. **Save it** as `claude-plans/proposal-<short-slug>.md`, unless the user names a path.
 
