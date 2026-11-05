@@ -74,6 +74,8 @@ Use absolute GitHub URLs (`https://github.com/<org>/<repo>/blob/<branch>/path#L1
 
 The user asks questions about the draft and the document is edited in response. **Every writing rule applies to those edits exactly as it applies to the first draft.**
 
+The discussion can happen here, or in a conversation of its own. If the user wants a separate one, start the `plan-with-diagrams:proposal-interactive-reviewer` agent with the saved path, and tell the user to open its transcript from the agent panel to talk to it.
+
 - **Answer with the conclusion first, then the reason.** This holds in the chat reply and in the document.
 
 - **Fold the answer into the document.** A question that was worth asking marks a part of the document that was not clear enough.
