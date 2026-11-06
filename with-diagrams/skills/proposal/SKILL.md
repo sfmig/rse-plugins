@@ -1,9 +1,26 @@
 ---
 name: proposal
-description: Research a code change in plan mode, then write a proposal document for people to review before any code is written, in GitHub-flavoured Markdown with mermaid diagrams, signatures, diffs and tables.
+description: Research a code change, then write a proposal document for people to review before any code is written, in GitHub-flavoured Markdown with mermaid diagrams, signatures, diffs and tables.
 when_to_use: Use when the user asks for a proposal, design doc, RFC or "a plan I can review / share / discuss" for a single PR-sized change. Do not use for a quick plan-mode plan the user will approve in the terminal.
 argument-hint: "[change to propose]"
-allowed-tools: Bash(${CLAUDE_SKILL_DIR}/scripts/check-mermaid.sh *)
+allowed-tools:
+  - Bash(${CLAUDE_SKILL_DIR}/scripts/check-mermaid.sh *)
+  - Bash(rm -f claude-plans/.implementing)
+# Edit guard. Skill hooks stay registered for the rest of the session, so the
+# hook steps aside once claude-plans/.implementing exists (see "Write only the
+# proposal" below). Only Edit/Write/MultiEdit/NotebookEdit are guarded, not Bash.
+hooks:
+  PreToolUse:
+    - matcher: "Edit|Write|MultiEdit|NotebookEdit"
+      hooks:
+        - type: command
+          command: |
+            p=$(jq -r '.tool_input.file_path // .tool_input.notebook_path // empty')
+            d="${CLAUDE_PROJECT_DIR:-$PWD}"
+            case "$p" in ""|"$d"/claude-plans/*) exit 0 ;; "$d"/*) ;; *) exit 0 ;; esac
+            [ -e "$d/claude-plans/.implementing" ] && exit 0
+            echo "Blocked by with-diagrams:proposal: while a proposal is under discussion, only files in claude-plans/ can be edited. If the user has explicitly asked you to implement the change, create an empty claude-plans/.implementing and retry. Otherwise stop and ask the user." >&2
+            exit 2
 ---
 
 # Proposal
@@ -14,7 +31,11 @@ If that is empty, ask the user what the change is before doing anything else.
 
 Write **one document per PR**, for a human to read, comment on and discuss before any code is written.
 
-- **The proposal replaces the plan-mode plan.** Enter plan mode, but the document is the deliverable. Do not write a second, separate plan for terminal approval.
+- **The proposal is the only deliverable.** Do not enter plan mode, and do not write a separate plan for terminal approval.
+
+- **Write only the proposal.** Write no code and edit no source files, with Bash or any other tool.
+    - A hook from this skill enforces this: for the rest of the session it refuses edits to project files outside `claude-plans/`.
+    - When the user explicitly asks you to implement the change, create an empty `claude-plans/.implementing` to lift the block. Never create it on your own initiative.
 
 - **One proposal = one PR = one small feature.** If the change does not fit in one PR, say so and propose the split.
 
@@ -22,7 +43,7 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
 
 ## Process
 
-1. **Enter plan mode.** Call `EnterPlanMode` before touching anything. Load it with `ToolSearch` (`select:EnterPlanMode,ExitPlanMode`) if its schema is not available. Write no code and edit no source files. Plan mode only lets you write its own plan file, so that file is where the proposal is drafted.
+1. **Reset the edit guard.** Run `rm -f claude-plans/.implementing` from the project root, so an unlock left over from an earlier proposal does not carry over.
 
 2. **Investigate first.** A proposal is only worth reading if every claim is checked.
 
@@ -36,21 +57,19 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
 
 3. **Plan the document before you write it.** Bullet what must be covered, then order the bullets. Sketch the diagrams first: they carry the argument, and the text only fills the gaps they leave.
 
-4. **Draft it in the plan file.** Follow *Sections* and *Writing rules* below. Use [examples/proposal-orientation-labelling.md](examples/proposal-orientation-labelling.md) as a worked example of the sections and their level of detail.
+4. **Draft it in `claude-plans/proposal-<short-slug>.md`** in the project, unless the user names another path under `claude-plans/`. Follow *Sections* and *Writing rules* below. Use [examples/proposal-orientation-labelling.md](examples/proposal-orientation-labelling.md) as a worked example of the sections and their level of detail.
 
-5. **Check the diagrams render.** Run `${CLAUDE_SKILL_DIR}/scripts/check-mermaid.sh <plan file>` and fix every `FAIL`. If it exits with status 2 (no renderer available), say so when presenting and carry on.
+5. **Check the diagrams render.** Run `${CLAUDE_SKILL_DIR}/scripts/check-mermaid.sh <proposal>` and fix every `FAIL`. If it exits with status 2 (no renderer available), say so when presenting and carry on.
 
-6. **Review it with fresh eyes.** Run two agents in parallel on the plan file:
+6. **Review it with fresh eyes.** Run two agents in parallel on the proposal:
     - `with-diagrams:proposal-cold-reader` returns the questions a first-time reviewer would ask. Fold each answer into the document; move anything you cannot resolve into *Points to discuss*.
     - `with-diagrams:writing-style-checker` returns writing-rule violations. Fix them all.
 
     Re-run the diagram check if you changed a diagram.
 
-7. **Present it.** Call `ExitPlanMode`. The user sees the proposal itself for approval. Approving it means "the proposal is ready for discussion", not "start implementing".
+7. **Present it.** Give the user the path and offer to publish it for comment (below). Ask them to read it and comment. Do not start implementing unless the user asks.
 
-8. **Save it** once out of plan mode: copy the plan file to `claude-plans/proposal-<short-slug>.md` in the project, unless the user names a path. Tell the user the path and offer to publish it for comment (below). From here on, edit the saved copy, not the plan file. Do not start implementing unless the user asks.
-
-9. **Refine it interactively.** See *During the discussion*.
+8. **Refine it interactively.** See *During the discussion*.
 
 ## Publishing for comment
 
