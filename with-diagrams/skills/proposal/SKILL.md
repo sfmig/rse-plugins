@@ -3,23 +3,23 @@ name: proposal
 description: Research a code change, then write a proposal document for people to review before any code is written, in GitHub-flavoured Markdown with mermaid diagrams, signatures, diffs and tables.
 when_to_use: Use when the user asks for a proposal, design doc, RFC or "a plan I can review / share / discuss" for a single PR-sized change. Do not use for a quick plan-mode plan the user will approve in the terminal.
 argument-hint: "[change to propose]"
-allowed-tools:
-  - Bash(${CLAUDE_SKILL_DIR}/scripts/check-mermaid.sh *)
-  - Bash(rm -f claude-plans/.implementing)
-# Edit guard. Skill hooks stay registered for the rest of the session, so the
-# hook steps aside once claude-plans/.implementing exists (see "Write only the
-# proposal" below). Only Edit/Write/MultiEdit/NotebookEdit are guarded, not Bash.
+allowed-tools: Bash(${CLAUDE_SKILL_DIR}/scripts/check-mermaid.sh *)
+# Edit guard, kept identical in the discuss skill. Skill hooks stay registered
+# for the rest of the session: only claude-plans/ is editable, except by the
+# with-diagrams:implementer agent, which works in its own worktree.
+# Only Edit/Write/MultiEdit/NotebookEdit are guarded, not Bash.
 hooks:
   PreToolUse:
     - matcher: "Edit|Write|MultiEdit|NotebookEdit"
       hooks:
         - type: command
           command: |
-            p=$(jq -r '.tool_input.file_path // .tool_input.notebook_path // empty')
+            i=$(cat)
+            case "$(printf '%s' "$i" | jq -r '.agent_type // empty')" in with-diagrams:implementer|implementer) exit 0 ;; esac
+            p=$(printf '%s' "$i" | jq -r '.tool_input.file_path // .tool_input.notebook_path // empty')
             d="${CLAUDE_PROJECT_DIR:-$PWD}"
             case "$p" in ""|"$d"/claude-plans/*) exit 0 ;; "$d"/*) ;; *) exit 0 ;; esac
-            [ -e "$d/claude-plans/.implementing" ] && exit 0
-            echo "Blocked by with-diagrams:proposal: while a proposal is under discussion, only files in claude-plans/ can be edited. If the user has explicitly asked you to implement the change, create an empty claude-plans/.implementing and retry. Otherwise stop and ask the user." >&2
+            echo "Blocked by with-diagrams: in a proposal session only files in claude-plans/ can be edited. Code is changed only by the with-diagrams:implementer agent, which the user starts by asking to implement the proposal (see the with-diagrams:discuss skill). Do not work around this block; tell the user." >&2
             exit 2
 ---
 
@@ -35,7 +35,7 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
 
 - **Write only the proposal.** Write no code and edit no source files, with Bash or any other tool.
     - A hook from this skill enforces this: for the rest of the session it refuses edits to project files outside `claude-plans/`.
-    - When the user explicitly asks you to implement the change, create an empty `claude-plans/.implementing` to lift the block. Never create it on your own initiative.
+    - The code is changed only by the `with-diagrams:implementer` agent, once the user asks to implement. *Implementing it* in the discuss skill describes how to start it.
 
 - **One proposal = one PR = one small feature.** If the change does not fit in one PR, say so and propose the split.
 
@@ -43,9 +43,7 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
 
 ## Process
 
-1. **Reset the edit guard.** Run `rm -f claude-plans/.implementing` from the project root, so an unlock left over from an earlier proposal does not carry over.
-
-2. **Investigate first.** A proposal is only worth reading if every claim is checked.
+1. **Investigate first.** A proposal is only worth reading if every claim is checked.
 
     Run the `with-diagrams:proposal-investigator` agent with the change to propose. It returns anchored facts, each marked verified or unverified. Read the code behind any fact the proposal will lean on, and carry its *Open questions* into *Points to discuss*.
 
@@ -55,21 +53,21 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
     - check open issues and pull requests that touch the same files (with `gh issue list` and `gh pr list` if the project is on GitHub and `gh` is installed; otherwise ask the user for related issues);
     - look for existing tests and fixtures you can reuse.
 
-3. **Plan the document before you write it.** Bullet what must be covered, then order the bullets. Sketch the diagrams first: they carry the argument, and the text only fills the gaps they leave.
+2. **Plan the document before you write it.** Bullet what must be covered, then order the bullets. Sketch the diagrams first: they carry the argument, and the text only fills the gaps they leave.
 
-4. **Draft it in `claude-plans/proposal-<short-slug>.md`** in the project, unless the user names another path under `claude-plans/`. Follow *Sections* and *Writing rules* below. Use [examples/proposal-orientation-labelling.md](examples/proposal-orientation-labelling.md) as a worked example of the sections and their level of detail.
+3. **Draft it in `claude-plans/proposal-<short-slug>.md`** in the project, unless the user names another path under `claude-plans/`. Follow *Sections* and *Writing rules* below. Use [examples/proposal-orientation-labelling.md](examples/proposal-orientation-labelling.md) as a worked example of the sections and their level of detail.
 
-5. **Check the diagrams render.** Run `${CLAUDE_SKILL_DIR}/scripts/check-mermaid.sh <proposal>` and fix every `FAIL`. If it exits with status 2 (no renderer available), say so when presenting and carry on.
+4. **Check the diagrams render.** Run `${CLAUDE_SKILL_DIR}/scripts/check-mermaid.sh <proposal>` and fix every `FAIL`. If it exits with status 2 (no renderer available), say so when presenting and carry on.
 
-6. **Review it with fresh eyes.** Run two agents in parallel on the proposal:
+5. **Review it with fresh eyes.** Run two agents in parallel on the proposal:
     - `with-diagrams:proposal-cold-reader` returns the questions a first-time reviewer would ask. Fold each answer into the document; move anything you cannot resolve into *Points to discuss*.
     - `with-diagrams:writing-style-checker` returns writing-rule violations. Fix them all.
 
     Re-run the diagram check if you changed a diagram.
 
-7. **Present it.** Give the user the path and offer to publish it for comment (below). Ask them to read it and comment. Do not start implementing unless the user asks.
+6. **Present it.** Give the user the path and offer to publish it for comment (below). Suggest discussing it in a new conversation with `/with-diagrams:discuss <path>`, where Claude only knows what the proposal and the code say. Do not start implementing unless the user asks.
 
-8. **Refine it interactively.** See *During the discussion*.
+7. **Refine it interactively.** See *During the discussion*.
 
 ## Publishing for comment
 
@@ -93,11 +91,13 @@ Use absolute GitHub URLs (`https://github.com/<org>/<repo>/blob/<branch>/path#L1
 
 The user asks questions about the draft and the document is edited in response. **Every writing rule applies to those edits exactly as it applies to the first draft.**
 
-The discussion can happen here, or in a conversation of its own. If the user wants a separate one, start the `with-diagrams:proposal-interactive-reviewer` agent with the saved path, and tell the user to open its transcript from the agent panel to talk to it.
+The discussion is best held in a new conversation, started with `/with-diagrams:discuss <path>`. That conversation does not know the investigation, so a question it cannot answer from the document exposes a gap in the document. If the user prefers to discuss it here, follow the rules below.
 
 - **Answer with the conclusion first, then the reason.** This holds in the chat reply and in the document.
 
-- **Fold the answer into the document.** A question that was worth asking marks a part of the document that was not clear enough.
+- **Suggest folding the answer into the document, and wait for the user to agree.** A question that was worth asking marks a part of the document that may not be clear enough.
+    - Name the section, give the exact text to add or replace, and ask whether to add it.
+    - Edit only when the user agrees. Edits the user asks for directly need no suggestion step.
 
 - **Never mention earlier drafts.** Keep the conclusion and the reasoning; drop the history.
 
