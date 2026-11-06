@@ -41,37 +41,40 @@ A user can trigger a workflow under a plugin explicitly using semicolon notation
 
 ### User workflow
 
+0. Git-checkout a branch for the feature.
+
 1. **Describe** a desired feature to Claude and prompt it to draft a proposal.
     - If you want to be explicit, you can trigger it with `/with-diagrams:proposal`.
 
-2. The main Claude agent will follow the workflow described in the `proposal` skill, delegating to subagents when necessary, and **produce a proposal markdown file** with diagrams, code snippets, bullet-point lists and collapsible sections. 
+2. The main Claude agent will follow the workflow described in the `proposal` skill, delegating to subagents when necessary. It will **produce a proposal markdown file** with diagrams, code snippets, bullet-point lists and collapsible sections. 
     - The goal is to transmit clearly a detailed implementation of a feature while avoiding dense prose, providing more details gradually, and using visual communication where possible and relevant.
     - The proposal will be added to a `claude-plans` subdirectory, under the current directory.
 
-3. Once the proposal is ready, start a new Claude conversation, and ask questions and clarifications about the proposal by selecting specific sections of it. 
-    - Claude will clarify and edit the proposal where it is confusing, and make any requested changes.
+3. Once the proposal is ready, start a new Claude conversation with `/with-diagrams:discuss`, and ask questions and clarifications about the proposal by selecting specific sections of it.
+    - Where the proposal is confusing, Claude suggests a clarification, and adds it only if you agree. 
     - In the "Points to discuss" section, you can add your conclusions that you want the agent to take into account when implementing.
     - Feel free to make edits on the proposal yourself, to make the description of the implementation as clear as possible to future you or others. I find that by rephrasing some of the sections and checking with Claude if I understood correctly I often get a better understanding.
 
-4. Once you are happy with the proposal and feel like you have a clear idea of how the feature, ask Claude to implement it and open a draft PR.
-    - I usually ask for Claude to do the implementation in the same branch that holds the proposal. This way the proposal is kept in the PR history.
+4. Once you are happy with the proposal and feel like you have a clear idea of how the feature is designed, ask Claude to implement it and open a draft PR.
+    - Claude commits the proposal on your feature branch (after asking). This way the proposal is kept in the PR history.
+    - Then it hands the proposal to the `implementer` agent. The agent works in its own git worktree, pushes its commits to your feature branch and opens the draft PR.
+    - Meanwhile, **switch to another branch and work on something else.** The agent's worktree is separate, so your checkout does not affect it.
+    - Until the agent reports back, don't commit to, rebase or push the feature branch: the agent's push must be a fast-forward.
+    - When it's done, Claude gives you the PR link. Run `git switch <feature-branch> && git pull` to get the commits locally.
     - After implementing the PR, the proposal is deleted (but will remain in the PR history for reference).
-    -  You can also explicitly request for the PR description to follow the repo's template and style.
-    - I also often ask for it to make small self-contained commits, that hold closely related changes and that I can review one by one.
-
 
 
 
 ### Agentic workflow
 
-When the `proposal` workflow is triggered, this is what is happening under the hood:
+When the `proposal` workflow is triggered, this is what happens under the hood:
 
-1. An edit guard is enables, that makes only `claude-plans` writable (not strictly enforced). 
+1. An edit guard is enabled, that makes only `claude-plans` writable (bash is not covered). 
     - This is because during the drafting of the proposal, we do not want code to be edited.
 
-2. The main Claude agent delegates to an `investigator` agent, that collects relevant facts for the proposal and reports back to the main agent.
+2. The main Claude agent delegates to an `investigator` agent (Sonnet), that collects relevant facts for the proposal and reports back to the main agent.
 
-3. Using the gathered information, the main agent generated a draft proposal.
+3. Using the gathered information, the main agent generates a draft proposal.
 
 4. The draft proposal is then checked in three ways:
     - First, we check that the mermaid diagrams render correctly with a bash script.
@@ -79,49 +82,29 @@ When the `proposal` workflow is triggered, this is what is happening under the h
         - One of them checks the style matches the guidelines under `writing-style`
         - Another one acts as a cold-reader and checks for confusing points.
 
-5. The main Claude agent receives the review reports and makes the necessary edits (ok?) 
+5. The main Claude agent receives the review reports and makes the necessary edits 
 
 6. After the final edits, the proposal is presented to the user for discussion.
 
-7. To discuss the proposal, (how to trigger the interactive)
+7. The user discusses the proposal in a conversation with a new agent, started with `/with-diagrams:discuss <path>`
 
 
-```mermaid
-flowchart TD
-    A["/with-diagrams:proposal &lt;change&gt;"] --> B[Edit guard on: only claude-plans/ is writable]
-    B --> C[investigator agent: verified facts]
-    C --> D[Draft claude-plans/proposal-slug.md]
-    D --> E[check-mermaid.sh]
-    E --> F[cold-reader + style-checker in parallel]
-    F --> H[Present the path to the user]
-    H --> I{Publish?}
-    I -->|Artifact| J[Comment threads come back to Claude]
-    I -->|GitHub| K[Branch, gist or draft PR, only if the user agrees to push]
-    I -->|Local| L[Editor preview]
-    J & K & L --> M[Discussion: edits folded in, conclusions recorded in Points to discuss]
-    M -->|user asks to implement| N[claude-plans/.implementing lifts the guard]
-```
-
-Solid arrows show the order of the steps; edge labels name the branch taken.
-
-The edit guard is a `PreToolUse` hook in the `proposal` skill's frontmatter:
-
-- It refuses Edit, Write, MultiEdit and NotebookEdit on project files outside `claude-plans/`.
-- Skill hooks stay registered for the rest of the session, so the guard steps aside once `claude-plans/.implementing` exists. Claude creates that file only when the user explicitly asks to implement.
-- It does not cover Bash, which is held to the same rule only by the skill's instructions.
-- It needs `jq` on `PATH`.
-
-It needs jq. macOS includes it at /usr/bin/jq. Without it, the hook allows everything.
-
-In your repo, you may want to gitignore claude-plans/.implementing.
+8. When the user asks to implement the proposal, the "discuss" conversation commits the proposal on the feature branch and starts the `implementer` subagent in the background:
+    - The subagent runs in its own git worktree, on a new branch. It points that branch at the feature branch's latest commit with `git reset --hard <branch>`, without checking the feature branch out (this is so the feature branch can stay checked out in your main checkout).
+    - The subagent then makes one commit per step of the proposal, runs the proposal's verifications, and deletes the proposal in a last commit.
+    - It pushes to the (remote) feature branch as a fast-forward and opens a draft PR. It never force-pushes.
+    - Once the push and the PR have succeeded, it deletes its worktree's own local branch. If it stops early, it keeps that branch, because its commits exist only there.
+    - If the proposal doesn't match the code, it stops and reports instead of guessing, because a subagent can't ask the user questions.
 
 
-## Notes for developers
-* Files a skill reads should live inside that skill's folder. Claude resolves paths in SKILL.md relative to the skill directory
+In the repo you work on, you may want to gitignore `.claude/worktrees/`, where the agent's worktree is created.
+
+
+## Contributing
 
 ### Develop with live edits
 
-Load the plugin straight from this repo, so Claude Code reads your working copy instead of an installed one.
+During development of the plugin, you can load the plugin straight from this repo, so Claude Code reads your working copy instead of an installed one.
 
 1. **Load the plugin folder** in a new session. Use one of these:
     - Terminal:
@@ -138,11 +121,15 @@ Load the plugin straight from this repo, so Claude Code reads your working copy 
 
     Pointing either option at `rse-plugins/` instead loads every plugin folder in it.
 
-2. **Check that it loaded.** `/with-diagrams:proposal` should autocomplete, and `/plugin` lists the plugin under **Installed**. Load errors appear under **Errors**.
+2. **Check that it loaded.** 
+    - `/with-diagrams:proposal` should autocomplete, 
+    - `/plugin` lists the plugin under **Installed**. Load errors appear under **Errors**.
 
-3. **Edit the files**, then run `/reload-plugins` in the session to apply the changes.
+3. **Edit the files**
+    - After editing, run `/reload-plugins` in the session to apply the changes.
 
-4. **Re-run the skill after editing its frontmatter.** Skill hooks are registered when the skill runs, so run `/with-diagrams:proposal` again, then check `/hooks`.
+4. **Re-run the skill after editing its frontmatter.** 
+    - Skill hooks are registered when the skill runs, so run `/with-diagrams:proposal` again, then check `/hooks`.
 
 5. **Validate before committing**:
 
@@ -159,25 +146,33 @@ Load the plugin straight from this repo, so Claude Code reads your working copy 
 
     It needs `mmdc` or Node.js (`npx`). On first use, also install the headless browser that mermaid-cli renders with: `npx puppeteer browsers install chrome-headless-shell`.
 
-Don't also install the plugin from the marketplace while developing. Two plugins with the same name would be loaded.
+> [!WARNING]
+> Don't also install the plugin from the marketplace while developing. Two plugins with the same name would be loaded.
 
 ### Release a change
 
-An installed copy is pinned to `version` in [plugin.json](with-diagrams/.claude-plugin/plugin.json). Users only get a change once that version is bumped:
+Users who install the plugin from the marketplace get a copy of the `version` in [plugin.json](with-diagrams/.claude-plugin/plugin.json). So to pass on any updates, we need to bump that version:
 
 1. Bump `version` in `with-diagrams/.claude-plugin/plugin.json`.
 2. Validate, as in step 5 above, and push.
 3. Users update with `/plugin marketplace update rse-plugins`.
 
-### To test the edit guard while drafting the proposal
+### To test the edit guard and the implementer
 
-The `proposal` skill's hook blocks edits outside `claude-plans/` until `claude-plans/.implementing` exists. To check it:
+The skills' hook blocks edits outside `claude-plans/`, except by the `implementer` agent. To check it, in a test repo on a feature branch:
 
-1. Run `/with-diagrams:proposal <some change>`.
-2. Ask Claude to edit a source file. The edit should be refused, with a message naming `with-diagrams:proposal`.
-3. Ask Claude to implement. It should create `claude-plans/.implementing`, after which edits go through.
+1. Run `/with-diagrams:discuss <proposal>`.
+2. Ask Claude to edit a source file. The edit should be refused, with a message naming `with-diagrams`.
+3. Ask Claude to implement. It should commit the proposal, start the `implementer` agent, and tell you to switch branch.
+4. Check that the agent's edits go through. If they're refused too, the agent's `agent_type` isn't what the hook expects:
+    - Add `printf '%s\n' "$i" | jq -c '{agent_type}' >> "$TMPDIR/guard.log"` after the first line of the hook to see the real value.
+    - Then fix the `case` pattern in both skills.
+5. Check that the draft PR is opened from the feature branch, with one commit per step and the proposal deleted in the last one.
 
-If the hook never fires, check `/hooks` and the debug log. The hook needs `jq` on `PATH`. macOS includes it at /usr/bin/jq. Without it, the hook allows everything.
+If the hook never fires, check `/hooks` and the debug log.
+
+### Notes for developers
+* Files a skill reads should live inside that skill's folder. Claude resolves paths in SKILL.md relative to the skill directory
 
 
 ## Inspo
