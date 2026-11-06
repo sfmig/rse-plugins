@@ -14,26 +14,39 @@ An agent (or **subagent** here) is a separate worker the main Claude can delegat
 
 
 ## Installation
-To install all the plugins in this marketplace....
-From a local clone:
-....
+First add the marketplace, then install the plugins you want from it.
 
-From Claude code:
+From Claude Code:
 ```
-/plugin marketplace add ...
+/plugin marketplace add sfmig/rse-plugins
+/plugin install with-diagrams@rse-plugins
 ```
+
+From a local clone:
+```
+git clone https://github.com/sfmig/rse-plugins.git
+```
+then, in Claude Code:
+```
+/plugin marketplace add /path/to/rse-plugins
+/plugin install with-diagrams@rse-plugins
+```
+
+You can also run `/plugin` and pick the plugins from the **Discover** tab. Run `/reload-plugins` (or start a new session) to load them. 
+
+In the chat interface, you can click `/` and select "Manage plugins" > select the Marketplaces tab, and paste the path to the `rse-plugins` clone.
 
 
 
 ## The `with-diagrams` plugin
 
-Currently, the marketplace in this repo holds a single plugin (`with-diagrams`). 
+Currently, the marketplace in this repo holds a single plugin: `with-diagrams`. 
 
 The `with-diagrams` plugin produces markdown documents that are meant to be read by humans and try to transmit information mostly visually. 
 
 At the moment, the plugin only contains one workflow, captured in the skill called `proposal`. The plan is to further expand the plugin to include other workflows that can benefit from visual summaries (e.g. to provide an overview of an AI-generated PR that needs review).
 
-A user can trigger a workflow under a plugin explicitly using semicolon notation (e.g. `with-diagrams:proposal`). They can also be called by the main Claude agent directly when the context matches the skill's `when_to_use` description. 
+A user can trigger a workflow defined under a plugin explicitly using semicolon notation (e.g. `with-diagrams:proposal`). They can also be called by the main Claude agent directly when the context matches the skill's `when_to_use` description. 
 
 
 
@@ -41,16 +54,16 @@ A user can trigger a workflow under a plugin explicitly using semicolon notation
 
 ### User workflow
 
-0. Git-checkout a branch for the feature.
+0. Checkout a branch for the feature.
 
-1. **Describe** a desired feature to Claude and prompt it to draft a proposal.
+1. **Describe** the desired feature to Claude and prompt it to draft a proposal.
     - If you want to be explicit, you can trigger it with `/with-diagrams:proposal`.
 
 2. The main Claude agent will follow the workflow described in the `proposal` skill, delegating to subagents when necessary. It will **produce a proposal markdown file** with diagrams, code snippets, bullet-point lists and collapsible sections. 
     - The goal is to transmit clearly a detailed implementation of a feature while avoiding dense prose, providing more details gradually, and using visual communication where possible and relevant.
     - The proposal will be added to a `claude-plans` subdirectory, under the current directory.
 
-3. Once the proposal is ready, start a new Claude conversation with `/with-diagrams:discuss`, and ask questions and clarifications about the proposal by selecting specific sections of it.
+3. Once the proposal is ready, **start a new Claude conversation with `/with-diagrams:discuss`**, and ask questions and clarifications about the proposal by selecting specific sections of it.
     - Where the proposal is confusing, Claude suggests a clarification, and adds it only if you agree. 
     - In the "Points to discuss" section, you can add your conclusions that you want the agent to take into account when implementing.
     - Feel free to make edits on the proposal yourself, to make the description of the implementation as clear as possible to future you or others. I find that by rephrasing some of the sections and checking with Claude if I understood correctly I often get a better understanding.
