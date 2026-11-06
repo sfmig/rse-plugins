@@ -11,7 +11,7 @@ A plugin is a package that bundles several related pieces (here, skills and suba
 
 | Name | When is it triggered? |
 | --- | --- |
-|`/plan-with-diagrams` | |
+|`/with-diagrams:proposal` | |
 |`/review-with-diagrams`| |
 | ... | ... |
 

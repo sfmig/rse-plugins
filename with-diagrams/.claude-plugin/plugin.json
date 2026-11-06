@@ -1,6 +1,6 @@
 {
-  "name": "plan-with-diagrams",
-  "displayName": "Plan with diagrams",
+  "name": "with-diagrams",
+  "displayName": "With diagrams",
   "version": "0.1.0",
   "description": "Write proposals for code changes that people can review before any code is written: checked against the codebase, with mermaid diagrams, diffs and tables, then refined in discussion.",
   "author": {

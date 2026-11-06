@@ -6,8 +6,8 @@
   },
   "plugins": [
     {
-      "name": "plan-with-diagrams",
-      "source": "./plan-with-diagrams",
+      "name": "with-diagrams",
+      "source": "./with-diagrams",
       "category": "planning",
       "tags": ["proposal", "design-doc", "mermaid"]
     }

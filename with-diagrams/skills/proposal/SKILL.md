@@ -26,7 +26,7 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
 
 2. **Investigate first.** A proposal is only worth reading if every claim is checked.
 
-    Run the `plan-with-diagrams:proposal-investigator` agent with the change to propose. It returns anchored facts, each marked verified or unverified. Read the code behind any fact the proposal will lean on, and carry its *Open questions* into *Points to discuss*.
+    Run the `with-diagrams:proposal-investigator` agent with the change to propose. It returns anchored facts, each marked verified or unverified. Read the code behind any fact the proposal will lean on, and carry its *Open questions* into *Points to discuss*.
 
     If the agent is not available, investigate yourself before drafting:
     - read the code you propose to change, and note exact `file:line` anchors;
@@ -41,8 +41,8 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
 5. **Check the diagrams render.** Run `${CLAUDE_SKILL_DIR}/scripts/check-mermaid.sh <plan file>` and fix every `FAIL`. If it exits with status 2 (no renderer available), say so when presenting and carry on.
 
 6. **Review it with fresh eyes.** Run two agents in parallel on the plan file:
-    - `plan-with-diagrams:proposal-cold-reader` returns the questions a first-time reviewer would ask. Fold each answer into the document; move anything you cannot resolve into *Points to discuss*.
-    - `plan-with-diagrams:writing-style-checker` returns writing-rule violations. Fix them all.
+    - `with-diagrams:proposal-cold-reader` returns the questions a first-time reviewer would ask. Fold each answer into the document; move anything you cannot resolve into *Points to discuss*.
+    - `with-diagrams:writing-style-checker` returns writing-rule violations. Fix them all.
 
     Re-run the diagram check if you changed a diagram.
 
@@ -74,7 +74,7 @@ Use absolute GitHub URLs (`https://github.com/<org>/<repo>/blob/<branch>/path#L1
 
 The user asks questions about the draft and the document is edited in response. **Every writing rule applies to those edits exactly as it applies to the first draft.**
 
-The discussion can happen here, or in a conversation of its own. If the user wants a separate one, start the `plan-with-diagrams:proposal-interactive-reviewer` agent with the saved path, and tell the user to open its transcript from the agent panel to talk to it.
+The discussion can happen here, or in a conversation of its own. If the user wants a separate one, start the `with-diagrams:proposal-interactive-reviewer` agent with the saved path, and tell the user to open its transcript from the agent panel to talk to it.
 
 - **Answer with the conclusion first, then the reason.** This holds in the chat reply and in the document.
 
