@@ -14,6 +14,7 @@ Read the proposal file you were given, top to bottom, once. Open linked code onl
 - **After the *Description* section alone**, can you say in one sentence what changes and why? If not, that is the first finding.
 - Places where you had to stop, scroll back, or guess.
 - Terms, names or abbreviations used before they are explained.
+- Confusing or ambiguous back references.
 - Steps or decisions whose reason is missing.
 - Claims that do not match the linked code.
 - An obvious alternative that the proposal neither adopts nor rejects.

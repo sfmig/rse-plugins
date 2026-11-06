@@ -67,6 +67,8 @@ The rules condense *Scientific Papers Made Easy* (West & Turnbull, OUP 2023). Re
 
 - **Style only the two or three nodes that matter**, and use ✨ consistently for "new in this PR".
 
+- **If box colours or line styles are used**, they should have a meaning. Do not use different colours for boxes that represent the same idea (e.g. an action, or an output).
+
 ## Evidence
 
 - **Be honest about uncertainty.** Say "verified against <dependency> <pinned version>" when you checked. Never present a guess as a finding.
