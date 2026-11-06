@@ -1,0 +1,20 @@
+{
+  "name": "plan-with-diagrams",
+  "displayName": "Plan with diagrams",
+  "version": "0.1.0",
+  "description": "Write proposals for code changes that people can review before any code is written: checked against the codebase, with mermaid diagrams, diffs and tables, then refined in discussion.",
+  "author": {
+    "name": "S Minano"
+  },
+  "license": "BSD-3-Clause",
+  "keywords": [
+    "proposal",
+    "design-doc",
+    "rfc",
+    "planning",
+    "mermaid",
+    "diagrams",
+    "code-review",
+    "research-software"
+  ]
+}
