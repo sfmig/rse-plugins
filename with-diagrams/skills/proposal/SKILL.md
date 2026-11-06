@@ -36,7 +36,7 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
 
 3. **Plan the document before you write it.** Bullet what must be covered, then order the bullets. Sketch the diagrams first: they carry the argument, and the text only fills the gaps they leave.
 
-4. **Draft it in the plan file.** Follow *Sections* and *Writing rules* below. Use [template.md](template.md) as the skeleton.
+4. **Draft it in the plan file.** Follow *Sections* and *Writing rules* below. Use [examples/proposal-orientation-labelling.md](examples/proposal-orientation-labelling.md) as a worked example of the sections and their level of detail.
 
 5. **Check the diagrams render.** Run `${CLAUDE_SKILL_DIR}/scripts/check-mermaid.sh <plan file>` and fix every `FAIL`. If it exits with status 2 (no renderer available), say so when presenting and carry on.
 
@@ -120,7 +120,7 @@ Use these headings, in this order. Drop a section only if it is genuinely empty,
 
 7. **`## Files changed`** — a two-column table, file and change. Mark new files **new**.
 
-8. **`## Tests`** — answer *are tests needed?* in one line. If yes, list them grouped by kind (unit, integration), with a code snippet or pseudocode for each, and name the fixtures that already exist. In a first pass, one line per test is enough; expand them when the user asks.
+8. **`## Tests`** — answer *are tests needed?* in one line. If yes, list them grouped by kind (unit, integration), each kind in its own collapsed `<details>` block, with a code snippet or pseudocode for each, and name the fixtures that already exist. In a first pass, one line per test is enough; expand them when the user asks.
 
 9. **`## Documentation updates`** — answer *is a doc update needed?* in one line, and name the files.
 
