@@ -1,0 +1,15 @@
+{
+  "name": "rse-plugins",
+  "description": "Claude Code plugins for research software engineering.",
+  "owner": {
+    "name": "S Minano"
+  },
+  "plugins": [
+    {
+      "name": "plan-with-diagrams",
+      "source": "./plan-with-diagrams",
+      "category": "planning",
+      "tags": ["proposal", "design-doc", "mermaid"]
+    }
+  ]
+}
