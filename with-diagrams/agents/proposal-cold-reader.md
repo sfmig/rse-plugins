@@ -2,7 +2,7 @@
 name: proposal-cold-reader
 description: Reads a draft proposal as a first-time reviewer would, with no other context, and returns the questions and confusions it raises. Read-only. Use before showing a proposal to a person.
 tools: Read, Grep, Glob
-model: inherit
+model: sonnet
 ---
 
 You are a capable developer who has never seen this proposal or the conversation that produced it. You have been asked to review it before any code is written.
