@@ -44,6 +44,8 @@ Revised after feedback (2026-11-20). First draft had 14 flat files; the user cut
 
 Order inside block 1 goes from general to detailed: aim and components → flow → signatures → optional predict.
 
+**Reference example: block 1.** The user approved `1-general/` (2026-11-20) as the model for the other blocks: content, style, section links, back-to-top links. Copy at `~/arc/project_Zoo_crabs/crabs-exploration/pr-review/1-general/` (untracked in that repo).
+
 ### Methods that worked
 
 - **Verify every file:line** with `sed -n` / `grep -n` before writing it. Estimated line numbers were often off by a few lines.
@@ -84,6 +86,9 @@ Add new feedback here when the user asks. Newest last.
 | 16 | Keep the concise style | Tables, short bullets, file:line |
 | 17 | Aim as "Before this PR / With this PR"; plain English | Two bold-led paragraphs: before = what the store held and how runs behaved; with = what is added, what it aligns with, run changes. Name real variables (`attrs.mask_config`); say what *changed* (e.g. where config is saved), not just what exists |
 | 18 | Say how the signature changes were selected | One sentence in the file; selection script in `scripts/` |
+| 19 | Link the sections listed at the top of a file | `* [Flow diagram](#flow-diagram)`; anchor = GitHub/Pandoc slug of the `##` heading |
+| 20 | "Back to top" right under each `##` heading, standard style | `[↑ Back to top](#top)` on the line after the heading; no arrow inside the heading (changes its anchor) |
+| 21 | Block 1 (`1-general/`) is a good example to follow | Reference example, see above |
 
 ## Quarto support (to add to the skill)
 
@@ -105,7 +110,8 @@ Rules this needs from the other output files:
 - Exactly one `# ` heading per file, at the top.
 - Mermaid as plain ` ```mermaid ` fences, not ` ```{mermaid} ` (GitHub only renders the plain form).
 - Code links relative to the file (`../../crabs/...` from a block folder).
-- In-page anchors as `<a id="sig-x"></a>`: works in VS Code, GitHub and Quarto.
+- In-page anchors as `<a id="sig-x"></a>`: works in VS Code, GitHub and Quarto. Put them under a `##` heading, never above a file's `# ` heading (see gotchas).
+- Back to top: `[↑ Back to top](#top)`, no anchor anywhere. With no `id="top"` on the page, browsers (HTML spec) and GitHub scroll to the page top.
 
 Gotchas:
 
@@ -115,6 +121,9 @@ Gotchas:
 - `quarto render` fails in the sandbox ("unable to open database file"): it writes `~/Library/Caches/quarto`. Run outside the sandbox.
 - Quarto marks diff `+` lines `span.va` and `-` lines `span.st`; colour the parent line span with `:has()`. Use `inline-block; width:100%`, not `block` (doubles line spacing).
 - Diamonds make tall diagrams; use plain boxes when the diagram is an index.
+- A file's `# ` heading becomes a tab label, not a scroll target: `#workflow` goes nowhere.
+- Anything above a file's `# ` heading lands in the *previous* file's tab. An `<a id="top">` there sits in a hidden tab, so links to it do nothing.
+- Do not add `id="top"` anywhere (e.g. `[]{#top}` in `index.qmd`): it overrides the browser's built-in page-top for `#top`.
 - Checked with Quarto 1.9.37, mermaid 11.4.1.
 
 ## difit runner (`review.sh`)
