@@ -34,7 +34,7 @@ You can start a workflow explicitly with `/dev:<skill>` (e.g. `/dev:proposal`). 
 
 
 <details>
-<summary><strong>User workflow</strong></summary>
+<summary><strong>Recommended user workflow</strong></summary>
 
 0. Checkout a branch for the feature.
 
@@ -61,7 +61,7 @@ You can start a workflow explicitly with `/dev:<skill>` (e.g. `/dev:proposal`). 
 </details>
 
 <details>
-<summary><strong>Agentic workflow</strong></summary>
+<summary><strong>Under the hood</strong></summary>
 
 When the `proposal` workflow is triggered, this is what happens under the hood:
 
