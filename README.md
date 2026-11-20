@@ -70,7 +70,8 @@ You can start a workflow explicitly with `/dev:<skill>` (e.g. `/dev:proposal`). 
 
 
 
-### User workflow
+<details>
+<summary><strong>User workflow</strong></summary>
 
 0. Checkout a branch for the feature.
 
@@ -94,9 +95,10 @@ You can start a workflow explicitly with `/dev:<skill>` (e.g. `/dev:proposal`). 
     - When it's done, Claude gives you the PR link. Run `git switch <feature-branch> && git pull` to get the commits locally.
     - After implementing the PR, the proposal is deleted (but will remain in the PR history for reference).
 
+</details>
 
-
-### Agentic workflow
+<details>
+<summary><strong>Agentic workflow</strong></summary>
 
 When the `proposal` workflow is triggered, this is what happens under the hood:
 
@@ -129,6 +131,8 @@ When the `proposal` workflow is triggered, this is what happens under the hood:
 
 
 In the repo you work on, you may want to gitignore `.claude/worktrees/`, where the agent's worktree is created.
+
+</details>
 
 
 ## The `science` plugin
