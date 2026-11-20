@@ -19,7 +19,7 @@ First add the marketplace, then install the plugins you want from it.
 From Claude Code:
 ```
 /plugin marketplace add sfmig/rse-plugins
-/plugin install with-diagrams@rse-plugins
+/plugin install rse@rse-plugins
 ```
 
 From a local clone:
@@ -29,7 +29,7 @@ git clone https://github.com/sfmig/rse-plugins.git
 then, in Claude Code:
 ```
 /plugin marketplace add /path/to/rse-plugins
-/plugin install with-diagrams@rse-plugins
+/plugin install rse@rse-plugins
 ```
 
 You can also run `/plugin` and pick the plugins from the **Discover** tab. Run `/reload-plugins` (or start a new session) to load them. 
@@ -38,15 +38,25 @@ In the chat interface, you can click `/` and select "Manage plugins" > select th
 
 
 
-## The `with-diagrams` plugin
+## The `rse` plugin
 
-Currently, the marketplace in this repo holds a single plugin: `with-diagrams`. 
+Currently, the marketplace in this repo holds a single plugin: `rse`.
 
-The `with-diagrams` plugin produces markdown documents that are meant to be read by humans and try to transmit information mostly visually. 
+The skills in this plugin share three goals:
 
-At the moment, the plugin only contains one workflow, captured in the skill called `proposal`. The plan is to further expand the plugin to include other workflows that can benefit from visual summaries (e.g. to provide an overview of an AI-generated PR that needs review).
+- Make agent output easy for humans to digest.
+- Keep a human in the loop.
+- Show it visually first. Wherever they fit, documents use mermaid diagrams, signatures, diffs and tables rather than paragraphs. 
 
-A user can trigger a workflow defined under a plugin explicitly using semicolon notation (e.g. `with-diagrams:proposal`). They can also be called by the main Claude agent directly when the context matches the skill's `when_to_use` description. 
+Currently, the plugin has two workflows:
+
+| Skill | What it does |
+|---|---|
+| `proposal` | Given a feature request, it researches a codebase and writes a proposal for you to review |
+| `discuss` | Answers your questions about a proposal, refines it with your agreement, and finally hands it to an agent to implement. |
+
+
+You can start a workflow explicitly with `/rse:<skill>` (e.g. `/rse:proposal`). The main Claude agent can also start one itself when the conversation matches the skill's `when_to_use` description.
 
 
 
@@ -57,13 +67,13 @@ A user can trigger a workflow defined under a plugin explicitly using semicolon 
 0. Checkout a branch for the feature.
 
 1. **Describe** the desired feature to Claude and prompt it to draft a proposal.
-    - If you want to be explicit, you can trigger it with `/with-diagrams:proposal`.
+    - If you want to be explicit, you can trigger it with `/rse:proposal`.
 
 2. The main Claude agent will follow the workflow described in the `proposal` skill, delegating to subagents when necessary. It will **produce a proposal markdown file** with diagrams, code snippets, bullet-point lists and collapsible sections. 
     - The goal is to transmit clearly a detailed implementation of a feature while avoiding dense prose, providing more details gradually, and using visual communication where possible and relevant.
     - The proposal will be added to a `claude-plans` subdirectory, under the current directory.
 
-3. Once the proposal is ready, **start a new Claude conversation with `/with-diagrams:discuss`**, and ask questions and clarifications about the proposal by selecting specific sections of it.
+3. Once the proposal is ready, **start a new Claude conversation with `/rse:discuss`**, and ask questions and clarifications about the proposal by selecting specific sections of it.
     - Where the proposal is confusing, Claude suggests a clarification, and adds it only if you agree. 
     - In the "Points to discuss" section, you can add your conclusions that you want the agent to take into account when implementing.
     - Feel free to make edits on the proposal yourself, to make the description of the implementation as clear as possible to future you or others. I find that by rephrasing some of the sections and checking with Claude if I understood correctly I often get a better understanding.
@@ -99,7 +109,7 @@ When the `proposal` workflow is triggered, this is what happens under the hood:
 
 6. After the final edits, the proposal is presented to the user for discussion.
 
-7. The user discusses the proposal in a conversation with a new agent, started with `/with-diagrams:discuss <path>`
+7. The user discusses the proposal in a conversation with a new agent, started with `/rse:discuss <path>`
 
 
 8. When the user asks to implement the proposal, the "discuss" conversation commits the proposal on the feature branch and starts the `implementer` subagent in the background:
@@ -123,38 +133,38 @@ During development of the plugin, you can load the plugin straight from this rep
     - Terminal:
 
         ```bash
-        claude --plugin-dir /path/to/rse-plugins/with-diagrams
+        claude --plugin-dir /path/to/rse-plugins/rse
         ```
 
     - VS Code, or anywhere you can't pass a flag: add the folder to your *user* settings, `~/.claude/settings.json`, then open a new session. Project settings can't set this variable.
 
         ```json
-        { "env": { "CLAUDE_CODE_PLUGIN_DIRS": "/path/to/rse-plugins/with-diagrams" } }
+        { "env": { "CLAUDE_CODE_PLUGIN_DIRS": "/path/to/rse-plugins/rse" } }
         ```
 
     Pointing either option at `rse-plugins/` instead loads every plugin folder in it.
 
 2. **Check that it loaded.** 
-    - `/with-diagrams:proposal` should autocomplete, 
+    - `/rse:proposal` should autocomplete, 
     - `/plugin` lists the plugin under **Installed**. Load errors appear under **Errors**.
 
 3. **Edit the files**
     - After editing, run `/reload-plugins` in the session to apply the changes.
 
 4. **Re-run the skill after editing its frontmatter.** 
-    - Skill hooks are registered when the skill runs, so run `/with-diagrams:proposal` again, then check `/hooks`.
+    - Skill hooks are registered when the skill runs, so run `/rse:proposal` again, then check `/hooks`.
 
 5. **Validate before committing**:
 
     ```bash
-    claude plugin validate ./with-diagrams   # plugin manifest and skill/agent frontmatter
-    claude plugin validate .                 # marketplace manifest
+    claude plugin validate ./rse    # plugin manifest and skill/agent frontmatter
+    claude plugin validate .        # marketplace manifest
     ```
 
 6. **To check the diagrams render**:
 
     ```bash
-    with-diagrams/skills/proposal/scripts/check-mermaid.sh README.md
+    rse/skills/proposal/scripts/check-mermaid.sh README.md
     ```
 
     It needs `mmdc` or Node.js (`npx`). On first use, also install the headless browser that mermaid-cli renders with: `npx puppeteer browsers install chrome-headless-shell`.
@@ -164,9 +174,9 @@ During development of the plugin, you can load the plugin straight from this rep
 
 ### Release a change
 
-Users who install the plugin from the marketplace get a copy of the `version` in [plugin.json](with-diagrams/.claude-plugin/plugin.json). So to pass on any updates, we need to bump that version:
+Users who install the plugin from the marketplace get a copy of the `version` in [plugin.json](rse/.claude-plugin/plugin.json). So to pass on any updates, we need to bump that version:
 
-1. Bump `version` in `with-diagrams/.claude-plugin/plugin.json`.
+1. Bump `version` in `rse/.claude-plugin/plugin.json`.
 2. Validate, as in step 5 above, and push.
 3. Users update with `/plugin marketplace update rse-plugins`.
 
@@ -174,8 +184,8 @@ Users who install the plugin from the marketplace get a copy of the `version` in
 
 The skills' hook blocks edits outside `claude-plans/`, except by the `implementer` agent. To check it, in a test repo on a feature branch:
 
-1. Run `/with-diagrams:discuss <proposal>`.
-2. Ask Claude to edit a source file. The edit should be refused, with a message naming `with-diagrams`.
+1. Run `/rse:discuss <proposal>`.
+2. Ask Claude to edit a source file. The edit should be refused, with a message naming the `rse` plugin.
 3. Ask Claude to implement. It should commit the proposal, start the `implementer` agent, and tell you to switch branch.
 4. Check that the agent's edits go through. If they're refused too, the agent's `agent_type` isn't what the hook expects:
     - Add `printf '%s\n' "$i" | jq -c '{agent_type}' >> "$TMPDIR/guard.log"` after the first line of the hook to see the real value.

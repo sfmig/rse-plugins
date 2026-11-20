@@ -1,16 +1,16 @@
 {
-  "name": "with-diagrams",
-  "displayName": "With diagrams",
-  "version": "0.1.0",
-  "description": "Write proposals for code changes that people can review before any code is written: checked against the codebase, with mermaid diagrams, diffs and tables, then refined in discussion.",
+  "name": "rse",
+  "displayName": "RSE",
+  "version": "0.2.0",
+  "description": "Keeps a human in the loop on AI-assisted code changes by turning agent output into short, visual documents: mermaid diagrams, diffs and tables before prose.",
   "author": {
     "name": "S Minano"
   },
   "license": "BSD-3-Clause",
   "keywords": [
+    "human-in-the-loop",
     "proposal",
     "design-doc",
-    "rfc",
     "planning",
     "mermaid",
     "diagrams",

@@ -6,7 +6,7 @@ argument-hint: "[change to propose]"
 allowed-tools: Bash(${CLAUDE_SKILL_DIR}/scripts/check-mermaid.sh *)
 # Edit guard, kept identical in the discuss skill. Skill hooks stay registered
 # for the rest of the session: only claude-plans/ is editable, except by the
-# with-diagrams:implementer agent, which works in its own worktree.
+# rse:implementer agent, which works in its own worktree.
 # Only Edit/Write/MultiEdit/NotebookEdit are guarded, not Bash.
 hooks:
   PreToolUse:
@@ -15,11 +15,11 @@ hooks:
         - type: command
           command: |
             i=$(cat)
-            case "$(printf '%s' "$i" | jq -r '.agent_type // empty')" in with-diagrams:implementer|implementer) exit 0 ;; esac
+            case "$(printf '%s' "$i" | jq -r '.agent_type // empty')" in rse:implementer|implementer) exit 0 ;; esac
             p=$(printf '%s' "$i" | jq -r '.tool_input.file_path // .tool_input.notebook_path // empty')
             d="${CLAUDE_PROJECT_DIR:-$PWD}"
             case "$p" in ""|"$d"/claude-plans/*) exit 0 ;; "$d"/*) ;; *) exit 0 ;; esac
-            echo "Blocked by with-diagrams: in a proposal session only files in claude-plans/ can be edited. Code is changed only by the with-diagrams:implementer agent, which the user starts by asking to implement the proposal (see the with-diagrams:discuss skill). Do not work around this block; tell the user." >&2
+            echo "Blocked by the rse plugin: in a proposal session only files in claude-plans/ can be edited. Code is changed only by the rse:implementer agent, which the user starts by asking to implement the proposal (see the rse:discuss skill). Do not work around this block; tell the user." >&2
             exit 2
 ---
 
@@ -35,7 +35,7 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
 
 - **Write only the proposal.** Write no code and edit no source files, with Bash or any other tool.
     - A hook from this skill enforces this: for the rest of the session it refuses edits to project files outside `claude-plans/`.
-    - The code is changed only by the `with-diagrams:implementer` agent, once the user asks to implement. *Implementing it* in the discuss skill describes how to start it.
+    - The code is changed only by the `rse:implementer` agent, once the user asks to implement. *Implementing it* in the discuss skill describes how to start it.
 
 - **One proposal = one PR = one small feature.** If the change does not fit in one PR, say so and propose the split.
 
@@ -45,7 +45,7 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
 
 1. **Investigate first.** A proposal is only worth reading if every claim is checked.
 
-    Run the `with-diagrams:proposal-investigator` agent with the change to propose. It returns anchored facts, each marked verified or unverified. Read the code behind any fact the proposal will lean on, and carry its *Open questions* into *Points to discuss*.
+    Run the `rse:proposal-investigator` agent with the change to propose. It returns anchored facts, each marked verified or unverified. Read the code behind any fact the proposal will lean on, and carry its *Open questions* into *Points to discuss*.
 
     If the agent is not available, investigate yourself before drafting:
     - read the code you propose to change, and note exact `file:line` anchors;
@@ -60,12 +60,12 @@ Write **one document per PR**, for a human to read, comment on and discuss befor
 4. **Check the diagrams render.** Run `${CLAUDE_SKILL_DIR}/scripts/check-mermaid.sh <proposal>` and fix every `FAIL`. If it exits with status 2 (no renderer available), say so when presenting and carry on.
 
 5. **Review it with fresh eyes.** Run two agents in parallel on the proposal:
-    - `with-diagrams:proposal-cold-reader` returns the questions a first-time reviewer would ask. Fold each answer into the document; move anything you cannot resolve into *Points to discuss*.
-    - `with-diagrams:writing-style-checker` returns writing-rule violations. Fix them all.
+    - `rse:proposal-cold-reader` returns the questions a first-time reviewer would ask. Fold each answer into the document; move anything you cannot resolve into *Points to discuss*.
+    - `rse:writing-style-checker` returns writing-rule violations. Fix them all.
 
     Re-run the diagram check if you changed a diagram.
 
-6. **Present it.** Give the user the path and offer to publish it for comment (below). Suggest discussing it in a new conversation with `/with-diagrams:discuss <path>`, where Claude only knows what the proposal and the code say. Do not start implementing unless the user asks.
+6. **Present it.** Give the user the path and offer to publish it for comment (below). Suggest discussing it in a new conversation with `/rse:discuss <path>`, where Claude only knows what the proposal and the code say. Do not start implementing unless the user asks.
 
 7. **Refine it interactively.** See *During the discussion*.
 
@@ -91,7 +91,7 @@ Use absolute GitHub URLs (`https://github.com/<org>/<repo>/blob/<branch>/path#L1
 
 The user asks questions about the draft and the document is edited in response. **Every writing rule applies to those edits exactly as it applies to the first draft.**
 
-The discussion is best held in a new conversation, started with `/with-diagrams:discuss <path>`. That conversation does not know the investigation, so a question it cannot answer from the document exposes a gap in the document. If the user prefers to discuss it here, follow the rules below.
+The discussion is best held in a new conversation, started with `/rse:discuss <path>`. That conversation does not know the investigation, so a question it cannot answer from the document exposes a gap in the document. If the user prefers to discuss it here, follow the rules below.
 
 - **Answer with the conclusion first, then the reason.** This holds in the chat reply and in the document.
 

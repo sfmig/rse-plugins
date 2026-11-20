@@ -1,7 +1,7 @@
 ---
 name: discuss
 description: Discuss a saved proposal with the user in a fresh conversation - answer questions about it, weigh alternatives it does not cover, and suggest clarifications to the proposal, made only when the user agrees, under the same writing rules as the first draft.
-when_to_use: Use when the user wants to read, question, review or refine a proposal in claude-plans/, typically in a new conversation after /with-diagrams:proposal wrote it.
+when_to_use: Use when the user wants to read, question, review or refine a proposal in claude-plans/, typically in a new conversation after /rse:proposal wrote it.
 argument-hint: "[path to proposal]"
 allowed-tools:
   - Bash(${CLAUDE_PLUGIN_ROOT}/skills/proposal/scripts/check-mermaid.sh *)
@@ -9,7 +9,7 @@ allowed-tools:
   - Bash(git status *)
 # Edit guard, kept identical in the proposal skill. Skill hooks stay registered
 # for the rest of the session: only claude-plans/ is editable, except by the
-# with-diagrams:implementer agent, which works in its own worktree.
+# rse:implementer agent, which works in its own worktree.
 # Only Edit/Write/MultiEdit/NotebookEdit are guarded, not Bash.
 hooks:
   PreToolUse:
@@ -18,11 +18,11 @@ hooks:
         - type: command
           command: |
             i=$(cat)
-            case "$(printf '%s' "$i" | jq -r '.agent_type // empty')" in with-diagrams:implementer|implementer) exit 0 ;; esac
+            case "$(printf '%s' "$i" | jq -r '.agent_type // empty')" in rse:implementer|implementer) exit 0 ;; esac
             p=$(printf '%s' "$i" | jq -r '.tool_input.file_path // .tool_input.notebook_path // empty')
             d="${CLAUDE_PROJECT_DIR:-$PWD}"
             case "$p" in ""|"$d"/claude-plans/*) exit 0 ;; "$d"/*) ;; *) exit 0 ;; esac
-            echo "Blocked by with-diagrams: in a proposal session only files in claude-plans/ can be edited. Code is changed only by the with-diagrams:implementer agent, which the user starts by asking to implement the proposal (see the with-diagrams:discuss skill). Do not work around this block; tell the user." >&2
+            echo "Blocked by the rse plugin: in a proposal session only files in claude-plans/ can be edited. Code is changed only by the rse:implementer agent, which the user starts by asking to implement the proposal (see the rse:discuss skill). Do not work around this block; tell the user." >&2
             exit 2
 ---
 
@@ -75,7 +75,7 @@ Then tell the user in one line that you have read the proposal and are ready.
 
 ## Implementing it
 
-Only when the user explicitly asks. The `with-diagrams:implementer` agent does the work in its own git worktree, so the user's checkout is free while it runs.
+Only when the user explicitly asks. The `rse:implementer` agent does the work in its own git worktree, so the user's checkout is free while it runs.
 
 1. **Check the branch.** Run `git branch --show-current`.
     - If it is the default branch, stop. Ask the user to create a feature branch for the proposal, or offer to create one with a name you suggest.

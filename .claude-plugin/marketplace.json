@@ -6,10 +6,10 @@
   },
   "plugins": [
     {
-      "name": "with-diagrams",
-      "source": "./with-diagrams",
+      "name": "rse",
+      "source": "./rse",
       "category": "planning",
-      "tags": ["proposal", "design-doc", "mermaid"]
+      "tags": ["human-in-the-loop", "proposal", "design-doc", "mermaid"]
     }
   ]
 }
