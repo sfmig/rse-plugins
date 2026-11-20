@@ -6,8 +6,8 @@
   },
   "plugins": [
     {
-      "name": "rse",
-      "source": "./rse",
+      "name": "dev",
+      "source": "./dev",
       "category": "planning",
       "tags": ["human-in-the-loop", "proposal", "design-doc", "mermaid"]
     },

@@ -3,7 +3,7 @@
 
 This repo is a collection of plugins, also called a  **marketplace**. "RSE" in the name stands for "Research Software Engineering". 
 
-The marketplace currently collects Claude plugins that may useful in software development for research ("rse" plugins), or that support researches in their code development ("science" plugins).
+The marketplace currently collects Claude plugins that may useful in software development for research ("dev" plugins), or that support researches in their code development ("science" plugins).
 
 > [!NOTE] Some concepts
 > A **plugin** is a package that bundles skills that share some resources (e.g. subagents) and install, update and switch on or off together. 
@@ -22,8 +22,8 @@ From Claude Code:
 ```
 /plugin marketplace add sfmig/rse-plugins
 
-# To install the rse plugins:
-/plugin install rse@rse-plugins
+# To install the dev plugins:
+/plugin install dev@rse-plugins
 
 # To install the science plugins:
 /plugin install science@rse-plugins
@@ -37,8 +37,8 @@ then, in Claude Code:
 ```
 /plugin marketplace add /path/to/rse-plugins
 
-# To install the rse plugins:
-/plugin install rse@rse-plugins
+# To install the dev plugins:
+/plugin install dev@rse-plugins
 
 # To install the science plugins:
 /plugin install science@rse-plugins
@@ -50,7 +50,7 @@ In the chat interface, you can click `/` and select "Manage plugins" > select th
 
 
 
-## The `rse` plugin
+## The `dev` plugin
 
 The skills in this plugin aim to support developers that write software for research. They share three goals:
 
@@ -66,7 +66,7 @@ Currently, the plugin has two workflows:
 | `discuss` | Answers your questions about a proposal, refines it with your agreement, and finally hands it to an agent to implement. |
 
 
-You can start a workflow explicitly with `/rse:<skill>` (e.g. `/rse:proposal`). The main Claude agent can also start one itself when the conversation matches the skill's `when_to_use` description.
+You can start a workflow explicitly with `/dev:<skill>` (e.g. `/dev:proposal`). The main Claude agent can also start one itself when the conversation matches the skill's `when_to_use` description.
 
 
 
@@ -77,13 +77,13 @@ You can start a workflow explicitly with `/rse:<skill>` (e.g. `/rse:proposal`). 
 0. Checkout a branch for the feature.
 
 1. **Describe** the desired feature to Claude and prompt it to draft a proposal.
-    - If you want to be explicit, you can trigger it with `/rse:proposal`.
+    - If you want to be explicit, you can trigger it with `/dev:proposal`.
 
 2. The main Claude agent will follow the workflow described in the `proposal` skill, delegating to subagents when necessary. It will **produce a proposal markdown file** with diagrams, code snippets, bullet-point lists and collapsible sections. 
     - The goal is to transmit clearly a detailed implementation of a feature while avoiding dense prose, providing more details gradually, and using visual communication where possible and relevant.
     - The proposal will be added to a `claude-plans` subdirectory, under the current directory.
 
-3. Once the proposal is ready, **start a new Claude conversation with `/rse:discuss`**, and ask questions and clarifications about the proposal by selecting specific sections of it.
+3. Once the proposal is ready, **start a new Claude conversation with `/dev:discuss`**, and ask questions and clarifications about the proposal by selecting specific sections of it.
     - Where the proposal is confusing, Claude suggests a clarification, and adds it only if you agree. 
     - In the "Points to discuss" section, you can add your conclusions that you want the agent to take into account when implementing.
     - Feel free to make edits on the proposal yourself, to make the description of the implementation as clear as possible to future you or others. I find that by rephrasing some of the sections and checking with Claude if I understood correctly I often get a better understanding.
@@ -119,7 +119,7 @@ When the `proposal` workflow is triggered, this is what happens under the hood:
 
 6. After the final edits, the proposal is presented to the user for discussion.
 
-7. The user discusses the proposal in a conversation with a new agent, started with `/rse:discuss <path>`
+7. The user discusses the proposal in a conversation with a new agent, started with `/dev:discuss <path>`
 
 
 8. When the user asks to implement the proposal, the "discuss" conversation commits the proposal on the feature branch and starts the `implementer` subagent in the background:
@@ -154,38 +154,38 @@ During development of the plugin, you can load the plugin straight from this rep
     - Terminal:
 
         ```bash
-        claude --plugin-dir /path/to/rse-plugins/rse
+        claude --plugin-dir /path/to/rse-plugins/dev
         ```
 
     - VS Code, or anywhere you can't pass a flag: add the folder to your *user* settings, `~/.claude/settings.json`, then open a new session. Project settings can't set this variable.
 
         ```json
-        { "env": { "CLAUDE_CODE_PLUGIN_DIRS": "/path/to/rse-plugins/rse" } }
+        { "env": { "CLAUDE_CODE_PLUGIN_DIRS": "/path/to/rse-plugins/dev" } }
         ```
 
     Pointing either option at `rse-plugins/` instead loads every plugin folder in it.
 
 2. **Check that it loaded.** 
-    - `/rse:proposal` should autocomplete, 
+    - `/dev:proposal` should autocomplete, 
     - `/plugin` lists the plugin under **Installed**. Load errors appear under **Errors**.
 
 3. **Edit the files**
     - After editing, run `/reload-plugins` in the session to apply the changes.
 
 4. **Re-run the skill after editing its frontmatter.** 
-    - Skill hooks are registered when the skill runs, so run `/rse:proposal` again, then check `/hooks`.
+    - Skill hooks are registered when the skill runs, so run `/dev:proposal` again, then check `/hooks`.
 
 5. **Validate before committing**:
 
     ```bash
-    claude plugin validate ./rse    # plugin manifest and skill/agent frontmatter
+    claude plugin validate ./dev    # plugin manifest and skill/agent frontmatter
     claude plugin validate .        # marketplace manifest
     ```
 
 6. **To check the diagrams render**:
 
     ```bash
-    rse/skills/proposal/scripts/check-mermaid.sh README.md
+    dev/skills/proposal/scripts/check-mermaid.sh README.md
     ```
 
     It needs `mmdc` or Node.js (`npx`). On first use, also install the headless browser that mermaid-cli renders with: `npx puppeteer browsers install chrome-headless-shell`.
@@ -195,9 +195,9 @@ During development of the plugin, you can load the plugin straight from this rep
 
 ### Release a change
 
-Users who install the plugin from the marketplace get a copy of the `version` in [plugin.json](rse/.claude-plugin/plugin.json). So to pass on any updates, we need to bump that version:
+Users who install the plugin from the marketplace get a copy of the `version` in [plugin.json](dev/.claude-plugin/plugin.json). So to pass on any updates, we need to bump that version:
 
-1. Bump `version` in `rse/.claude-plugin/plugin.json`.
+1. Bump `version` in `dev/.claude-plugin/plugin.json`.
 2. Validate, as in step 5 above, and push.
 3. Users update with `/plugin marketplace update rse-plugins`.
 
@@ -205,8 +205,8 @@ Users who install the plugin from the marketplace get a copy of the `version` in
 
 The skills' hook blocks edits outside `claude-plans/`, except by the `implementer` agent. To check it, in a test repo on a feature branch:
 
-1. Run `/rse:discuss <proposal>`.
-2. Ask Claude to edit a source file. The edit should be refused, with a message naming the `rse` plugin.
+1. Run `/dev:discuss <proposal>`.
+2. Ask Claude to edit a source file. The edit should be refused, with a message naming the `dev` plugin.
 3. Ask Claude to implement. It should commit the proposal, start the `implementer` agent, and tell you to switch branch.
 4. Check that the agent's edits go through. If they're refused too, the agent's `agent_type` isn't what the hook expects:
     - Add `printf '%s\n' "$i" | jq -c '{agent_type}' >> "$TMPDIR/guard.log"` after the first line of the hook to see the real value.

@@ -1,6 +1,6 @@
 {
-  "name": "rse",
-  "displayName": "RSE",
+  "name": "dev",
+  "displayName": "Dev",
   "version": "0.2.0",
   "description": "Keeps a human in the loop on AI-assisted code changes by turning agent output into short, visual documents: mermaid diagrams, diffs and tables before prose.",
   "author": {
