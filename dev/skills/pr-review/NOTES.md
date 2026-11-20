@@ -82,6 +82,7 @@ Add new feedback here when the user asks. Newest last.
 | 14 | Tests reviewed in difit, file by file for now | `review.sh tests`, rows from the table in `1-tests.md` |
 | 15 | Check which steps can be deterministic, not LLM calls | Table below |
 | 16 | Keep the concise style | Tables, short bullets, file:line |
+| 17 | Aim as "Before this PR / With this PR"; plain English | Two bold-led paragraphs: before = what the store held and how runs behaved; with = what is added, what it aligns with, run changes. Name real variables (`attrs.mask_config`); say what *changed* (e.g. where config is saved), not just what exists |
 
 ## Quarto support (to add to the skill)
 
