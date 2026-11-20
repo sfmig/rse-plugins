@@ -5,14 +5,12 @@ This repo is a collection of plugins, also called a  **marketplace**. "RSE" in t
 
 The marketplace currently collects Claude plugins that may useful in software development for research ("dev" plugins), or that support researches in their code development ("science" plugins).
 
-> [!NOTE] Some concepts
-> A **plugin** is a package that bundles skills that share some resources (e.g. subagents) and install, update and switch on or off together. 
->
-> **Skills** can be exposed to the user or not. A useful way to frame this can be:
-> - user-invocable skills represent a *workflow*, as a set of instructions the main Claude follows itself, in the conversation that triggers the skill. 
-> - non-user-invocable skills represent a packet of *know-how* (e.g. this is how we write proposals), that the main Claude or subagents can access.
->
-> An agent (or **subagent** here) is a separate worker the main Claude can delegate to. The two often pair well in one plugin. E.g.: a skill can describe a workflow that includes “hand the draft to the fact-checker agent” as one of its steps. Users do not need to trigger this delegation: it is defined in the corresponding skill.
+> [!NOTE]
+> * A **plugin** is a package that bundles skills that share some resources (e.g. subagents) and install, update and switch on or off together. 
+> * **Skills** can be exposed to the user or not. A useful way to frame this can be:
+>         - user-invocable skills represent a *workflow*, as a set of instructions the main Claude follows itself, in the conversation that triggers the skill. 
+>     - non-user-invocable skills represent a packet of *know-how* (e.g. this is how we write proposals), that the main Claude or subagents can access.
+> * A **subagent** is a separate worker the main Claude can delegate to. The two often pair well in one plugin. E.g.: a skill can describe a workflow that includes “hand the draft to the fact-checker agent” as one of its steps. Users do not need to trigger this delegation: it is defined in the corresponding skill.
 
 
 ## Installation
