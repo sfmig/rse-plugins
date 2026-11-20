@@ -1,0 +1,19 @@
+{
+  "name": "science",
+  "displayName": "Science",
+  "version": "0.1.0",
+  "description": "Workflows for researchers who write code: making a repository citable and ready to archive for a paper or a release.",
+  "author": {
+    "name": "S Minano"
+  },
+  "license": "BSD-3-Clause",
+  "keywords": [
+    "research-software",
+    "citation",
+    "CITATION.cff",
+    "licence",
+    "zenodo",
+    "doi",
+    "release"
+  ]
+}

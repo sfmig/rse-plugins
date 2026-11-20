@@ -10,6 +10,12 @@
       "source": "./rse",
       "category": "planning",
       "tags": ["human-in-the-loop", "proposal", "design-doc", "mermaid"]
+    },
+    {
+      "name": "science",
+      "source": "./science",
+      "category": "research",
+      "tags": ["citation", "zenodo", "doi", "licence", "release"]
     }
   ]
 }

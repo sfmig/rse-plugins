@@ -1,16 +1,18 @@
 
 # RSE plugins
 
-This repo is a collection of plugins, also called a  **marketplace**. "RSE" in the name stands for "Research Software Engineering". The marketplace collects Claude plugins that may useful in software development for research.
+This repo is a collection of plugins, also called a  **marketplace**. "RSE" in the name stands for "Research Software Engineering". 
 
-## Plugins, skills and subagents
-A **plugin** is a package that bundles skills that share some resources (e.g. subagents) and install, update and switch on or off together. 
+The marketplace currently collects Claude plugins that may useful in software development for research ("rse" plugins), or that support researches in their code development ("science" plugins).
 
-**Skills** can be exposed to the user or not. A useful way to frame this can be:
-- user-invocable skills represent a *workflow*, as a set of instructions the main Claude follows itself, in the conversation that triggers the skill. 
-- non-user-invocable skills represent a packet of *know-how* (e.g. this is how we write proposals), that the main Claude or subagents can access.
-
-An agent (or **subagent** here) is a separate worker the main Claude can delegate to. The two often pair well in one plugin. E.g.: a skill can describe a workflow that includes “hand the draft to the fact-checker agent” as one of its steps. Users do not need to trigger this delegation: it is defined in the corresponding skill.
+> [!NOTE] Some concepts
+> A **plugin** is a package that bundles skills that share some resources (e.g. subagents) and install, update and switch on or off together. 
+>
+> **Skills** can be exposed to the user or not. A useful way to frame this can be:
+> - user-invocable skills represent a *workflow*, as a set of instructions the main Claude follows itself, in the conversation that triggers the skill. 
+> - non-user-invocable skills represent a packet of *know-how* (e.g. this is how we write proposals), that the main Claude or subagents can access.
+>
+> An agent (or **subagent** here) is a separate worker the main Claude can delegate to. The two often pair well in one plugin. E.g.: a skill can describe a workflow that includes “hand the draft to the fact-checker agent” as one of its steps. Users do not need to trigger this delegation: it is defined in the corresponding skill.
 
 
 ## Installation
@@ -19,7 +21,12 @@ First add the marketplace, then install the plugins you want from it.
 From Claude Code:
 ```
 /plugin marketplace add sfmig/rse-plugins
+
+# To install the rse plugins:
 /plugin install rse@rse-plugins
+
+# To install the science plugins:
+/plugin install science@rse-plugins
 ```
 
 From a local clone:
@@ -29,7 +36,12 @@ git clone https://github.com/sfmig/rse-plugins.git
 then, in Claude Code:
 ```
 /plugin marketplace add /path/to/rse-plugins
+
+# To install the rse plugins:
 /plugin install rse@rse-plugins
+
+# To install the science plugins:
+/plugin install science@rse-plugins
 ```
 
 You can also run `/plugin` and pick the plugins from the **Discover** tab. Run `/reload-plugins` (or start a new session) to load them. 
@@ -40,9 +52,7 @@ In the chat interface, you can click `/` and select "Manage plugins" > select th
 
 ## The `rse` plugin
 
-Currently, the marketplace in this repo holds a single plugin: `rse`.
-
-The skills in this plugin share three goals:
+The skills in this plugin aim to support developers that write software for research. They share three goals:
 
 - Make agent output easy for humans to digest.
 - Keep a human in the loop.
@@ -121,6 +131,17 @@ When the `proposal` workflow is triggered, this is what happens under the hood:
 
 
 In the repo you work on, you may want to gitignore `.claude/worktrees/`, where the agent's worktree is created.
+
+
+## The `science` plugin
+
+The skills in this plugin aim to support scientists and researchers who write code.
+
+| Skill | What it does |
+|---|---|
+| `release` | Gets a repo ready to cite and archive: writes or updates `CITATION.cff`, checks the licence is consistent, and lists the Zenodo/GitHub steps that mint a DOI. |
+
+Start it with `/science:release [version]`. It edits files only after you agree. It never tags, pushes, or creates GitHub releases: it gives you the commands to run instead.
 
 
 ## Contributing
