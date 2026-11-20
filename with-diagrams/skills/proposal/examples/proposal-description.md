@@ -1,0 +1,14 @@
+The model consists of two parts:
+
+1. A **main environment** that is declared in the root `pyproject.toml` and contains the `poseinterface` package itself and its dependencies. The corresponding `uv.lock` file is untracked.
+2. **Tool-specific environments**, one per tool, each defined by a tool folder in `poseinterface/envs/<tool>`. A `pyproject.toml` declares the tool-specific dependencies (e.g. `torch`), and also depends on `poseinterface` via an editable relative path. The corresponding `uv.lock` files are committed and, together with the tool's `pyproject.toml`, included in the PyPI wheel.
+
+**The main environment is managed as for a normal Python package**. The contributing workflow for making tool-agnostic changes to `poseinterface` does not change. Users install and use `poseinterface` like any other PyPI package.
+
+The tricky bit is that **tool-specific environments are constructed differently for developers and users**. Let's illustrate this by thinking of a developer who changes code specific to running `cotracker3`, and a user running inference via `cotracker3`.
+
+- **Developer.** They clone the repo and use the tool-specific `pyproject.toml` as a 'normal' uv project, e.g. `uv run --project poseinterface/envs/cotracker3`. This gets them a standalone env in `poseinterface/envs/cotracker3/.venv`, with an editable install of `poseinterface` plus the tool-specific dependencies pinned by `uv.lock`. That's what they use to run the tool's tests, run `infer.py` etc.
+- **User.** They install `poseinterface` from PyPI (or from git). They use a CLI dispatcher which handles the tool-specific environments for them. Specifically, this is what happens when they run `uvx poseinterface infer --tool cotracker3`:
+    - `uvx` pulls `poseinterface` from PyPI and installs it in a throwaway (but cached) `uv` env, picking the newest versions that fit the root `pyproject.toml` ranges (this env is not locked). The installation also includes each tool's `uv.lock` and `pyproject.toml` files, because these are part of the published wheels.
+    - A CLI dispatcher (defined in `poseinterface/cli.py`) finds `poseinterface/envs/cotracker3/uv.lock`, exports the tool-specific dependencies (except `poseinterface` !) to a temporary `requirements.txt` file, and install them into a separate temporary env in uv's cache. This temporary env is 'layered' on top of the `uvx` env; the two are not jointly resolved (the `uvx` env itself is not modified). If a dependency is required by both the main and the tool-specific envs, the locked version wins out (presumably because `sys.path` encounters the tool-specific env's `site-packages` before that of the main env).
+    - The tool's `infer.py` code runs in this combined 'layered' environment.

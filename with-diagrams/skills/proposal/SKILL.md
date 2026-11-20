@@ -127,7 +127,8 @@ Use these headings, in this order. Drop a section only if it is genuinely empty,
 
 1. **`# Proposal for <what>`** — one line of title, no preamble.
 
-2. **`## Description`** — one or two lines saying what changes, then a diagram of it. Nothing else.
+2. **`## Description`** — It should capture the higher-level mental model of the feature at a glance. Use diagrams and code diffs (with ... to omit unnecessary detail) if possible rather than prose. Avoid very detailed descriptions.
+    - See an example of a very good description of the feature: "a [poseinterface](https://github.com/neuroinformatics-unit/poseinterface) infer command that runs each tool in its own environment" in [examples/proposal-description.md](examples/proposal-description.md). Ideally it would have a small diagram at the start.
 
 3. **`## References`** — a bullet list of the issues, PRs and related plans this builds on or overlaps.
 
