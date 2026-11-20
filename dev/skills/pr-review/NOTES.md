@@ -82,8 +82,8 @@ Add new feedback here when the user asks. Newest last.
 | 14 | Tests reviewed in difit, file by file for now | `review.sh tests`, rows from the table in `1-tests.md` |
 | 15 | Check which steps can be deterministic, not LLM calls | Table below |
 | 16 | Keep the concise style | Tables, short bullets, file:line |
-| 17 | Say how the signature changes were selected | One sentence in the file; selection script in `scripts/` |
 | 17 | Aim as "Before this PR / With this PR"; plain English | Two bold-led paragraphs: before = what the store held and how runs behaved; with = what is added, what it aligns with, run changes. Name real variables (`attrs.mask_config`); say what *changed* (e.g. where config is saved), not just what exists |
+| 18 | Say how the signature changes were selected | One sentence in the file; selection script in `scripts/` |
 
 ## Quarto support (to add to the skill)
 
@@ -169,7 +169,7 @@ UNSURE: whether imported questions duplicate when the browser also restores them
 - Trial PR: the script found 23 changes; the hand-made list had all 23.
 - Still by hand (LLM or reviewer): config keys and script arguments; behaviour-only changes with the same signature; grouping changes under flowchart boxes.
 - Not covered by the script: class methods, nested functions.
-- State the selection rule in one sentence at the top of the signatures file (user feedback 17).
+- State the selection rule in one sentence at the top of the signatures file (user feedback 18).
 
 ## Open ideas for the skill
 
