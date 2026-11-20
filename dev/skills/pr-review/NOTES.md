@@ -31,18 +31,18 @@ Revised after feedback (2026-11-20). First draft had 14 flat files; the user cut
 
 | Block | File | Content |
 |---|---|---|
-| 1. Understand | `1-aim.md` | Aim (~3 sentences); optional "predict first" table |
-| | `2-components.md` | Before/after component diagrams |
-| | `3-flow.md` | Flowchart of the main path (legend, click links), then the sequence diagram |
-| | `4-signatures.md` | Same flowchart; each box links to its signature diff, tooltip summarises it |
+| 1. General (`1-general/`) | `1-aim.md` | Aim, then before/after component diagrams |
+| | `2-flow.md` | Flowchart of the main path (legend, click links), then the sequence diagram |
+| | `3-signatures.md` | One section per flowchart box: a one-line pipeline with that box highlighted, then its diffs; one sentence on how changes were selected |
+| | `4-predict.md` | Optional "predict first" table |
 | 2. Review | `1-atomic-branch.md` | Original commits; atomic scratch branch table |
 | | `2-difit.md` | Two difit options, how comments are saved, session plan, preloaded questions |
 | | `questions.json` | Skeptical questions as difit comments |
 | | `3-red-flags.md` | AI-specific checks, read last |
 | 3. Tests | `1-tests.md` | Test plan table for difit; behaviours tested and not tested |
-| root | `review.sh` | Runs difit one item per tab, saves comments to `notes/` |
+| root | `review.sh` | Runs difit one item per tab, saves comments to `comments/` |
 
-Order inside block 1 goes from general to detailed: aim → components → flow → signatures.
+Order inside block 1 goes from general to detailed: aim and components → flow → signatures → optional predict.
 
 ### Methods that worked
 
@@ -134,8 +134,8 @@ How `review.sh` uses them:
 |---|---|
 | One commit per tab, no manual runs | loop over `git rev-list --reverse base..atomic`; wait for difit to exit |
 | File groups per tab | `git diff -M base branch -- files \| difit - --clean` |
-| Save as you go | poll `/api/comments-json` every 2 s into `notes/<item>.json` |
-| Do not lose saved notes | overwrite only after a change; stdin items re-import saved notes via `--comment` |
+| Save as you go | poll `/api/comments-json` every 2 s into `comments/<item>.json` |
+| Do not lose saved comments | overwrite only after a change; stdin items re-import saved comments via `--comment` |
 | Preload questions on the right commit | `git blame` the question's line on the atomic branch |
 | Item lists editable by the reviewer | parse markdown table rows that end in `[ ]` / `[x]` |
 | Testing without a browser | `DIFIT_EXTRA="--no-open"`, add comments with `difit comment add` |
@@ -177,4 +177,4 @@ UNSURE: whether imported questions duplicate when the browser also restores them
 - Reuse `dev/skills/writing-style` rules for the summary file.
 - Optional step: strip comments on the scratch branch (makes the final diff non-empty).
 - Signatures view as two panes: flowchart fixed on the left, hover a box to show its diff on the right (custom JS in Quarto).
-- Merge all `notes/*.json` into one prompt for the agent at the end of block 2.
+- Merge all `comments/*.json` into one prompt for the agent at the end of block 2.
