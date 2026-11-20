@@ -72,6 +72,35 @@ Add new feedback here when the user asks. Newest last.
 | 4 | Code references in diagrams should be clickable | `click` to GitHub permalinks pinned to a commit SHA, plus a relative-link table as fallback |
 | 5 | Summary: brief, no ambiguous words, few clear words | Aim ~3 sentences; how ≤6 numbered sentences |
 | 6 | Wants a simple difit workflow to try | Step-by-step file with exact commands, checked against `difit --help` |
+| 7 | Wants to browse the rendered files as tabs, and keep VS Code preview working | Quarto support, see below |
+
+## Quarto support (to add to the skill)
+
+Optional step: one browser page, one tab per output file. The `.md` files stay unchanged, so VS Code and GitHub still render them.
+
+| File | Role |
+|---|---|
+| `index.qmd` | `::: {.panel-tabset}` with one `{{< include N-name.md >}}` per file; each file's `# ` heading becomes its tab title |
+| `_quarto.yml` | `render: [index.qmd]` only, `output-dir: _site`, `code-base-url` = GitHub permalink at the PR commit |
+| `mermaid.lua` | ` ```mermaid ` → `<pre class="mermaid">`; `../` links → `code-base-url` |
+| `mermaid.html` | Loads mermaid from CDN; draws a tab's diagrams when the tab is first shown |
+| `.gitignore` | `_site/`, `.quarto/` |
+
+Run: `cd pr-review && quarto preview`.
+
+Rules this needs from the other output files:
+
+- Exactly one `# ` heading per file, at the top.
+- Mermaid as plain ` ```mermaid ` fences, not ` ```{mermaid} ` (GitHub only renders the plain form).
+- Code links relative to the repo root via `../`.
+
+Gotchas:
+
+- Without `render: [index.qmd]`, Quarto renders every `.md` to a stray `.html` next to it.
+- Mermaid in a hidden tab draws blank; draw on `shown.bs.tab`.
+- `securityLevel: "loose"` is needed for `click` links in diagrams.
+- `quarto render` fails in the sandbox ("unable to open database file"): it writes `~/Library/Caches/quarto`. Run outside the sandbox.
+- Checked with Quarto 1.9.37, mermaid 11.4.1.
 
 ## Open ideas for the skill
 
