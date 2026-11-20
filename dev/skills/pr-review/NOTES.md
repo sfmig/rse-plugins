@@ -82,6 +82,7 @@ Add new feedback here when the user asks. Newest last.
 | 14 | Tests reviewed in difit, file by file for now | `review.sh tests`, rows from the table in `1-tests.md` |
 | 15 | Check which steps can be deterministic, not LLM calls | Table below |
 | 16 | Keep the concise style | Tables, short bullets, file:line |
+| 17 | Say how the signature changes were selected | One sentence in the file; selection script in `scripts/` |
 | 17 | Aim as "Before this PR / With this PR"; plain English | Two bold-led paragraphs: before = what the store held and how runs behaved; with = what is added, what it aligns with, run changes. Name real variables (`attrs.mask_config`); say what *changed* (e.g. where config is saved), not just what exists |
 
 ## Quarto support (to add to the skill)
@@ -147,7 +148,7 @@ UNSURE: whether imported questions duplicate when the browser also restores them
 |---|---|---|
 | File triage (+/-, bucket) | `git diff --numstat -M`; bucket by path rules | used |
 | Line anchors correct | script: each `file:line` exists and matches a name | idea |
-| Signature diff | `ast` compare of defs at base vs tip; or `griffe check` | idea, untested |
+| Signature diff | `scripts/signature_changes.py BASE TIP [PATH]` (`ast` compare); or `griffe check` | used; found the same 23 changes as the hand-made list |
 | Component diagram | import graph at base and tip (`pydeps`, or `ast` imports) → mermaid | idea; LLM picks what to show |
 | Flow diagram | call graph from `main` (`pyan3`, `code2flow`) | idea; noisy, LLM picks the path and labels |
 | Box ↔ signature link | function name in box ↔ def name in diff | idea, needs boxes named by function |
@@ -161,6 +162,14 @@ UNSURE: whether imported questions duplicate when the browser also restores them
 | CI and skip/xfail changes | `git diff -- .github`; grep `skip\|xfail` in test diff | used |
 | Duplicate helpers | clone detection (`pylint --enable=duplicate-code`, `jscpd`) | idea; LLM still judges "same intent" |
 | Aim, questions, red-flag reading | none | LLM |
+
+## Signatures view: how changes are selected
+
+- `scripts/signature_changes.py BASE TIP [PATH ...]` lists top-level defs and UPPER_CASE constants that are added, removed or changed. Output: tab-separated file, status, name, signature.
+- Trial PR: the script found 23 changes; the hand-made list had all 23.
+- Still by hand (LLM or reviewer): config keys and script arguments; behaviour-only changes with the same signature; grouping changes under flowchart boxes.
+- Not covered by the script: class methods, nested functions.
+- State the selection rule in one sentence at the top of the signatures file (user feedback 17).
 
 ## Open ideas for the skill
 
