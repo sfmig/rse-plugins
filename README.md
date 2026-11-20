@@ -13,40 +13,6 @@ The marketplace currently collects Claude plugins that may useful in software de
 > * A **subagent** is a separate worker the main Claude can delegate to. The two often pair well in one plugin. E.g.: a skill can describe a workflow that includes “hand the draft to the fact-checker agent” as one of its steps. Users do not need to trigger this delegation: it is defined in the corresponding skill.
 
 
-## Installation
-First add the marketplace, then install the plugins you want from it.
-
-From Claude Code:
-```
-/plugin marketplace add sfmig/rse-plugins
-
-# To install the dev plugins:
-/plugin install dev@rse-plugins
-
-# To install the science plugins:
-/plugin install science@rse-plugins
-```
-
-From a local clone:
-```
-git clone https://github.com/sfmig/rse-plugins.git
-```
-then, in Claude Code:
-```
-/plugin marketplace add /path/to/rse-plugins
-
-# To install the dev plugins:
-/plugin install dev@rse-plugins
-
-# To install the science plugins:
-/plugin install science@rse-plugins
-```
-
-You can also run `/plugin` and pick the plugins from the **Discover** tab. Run `/reload-plugins` (or start a new session) to load them. 
-
-In the chat interface, you can click `/` and select "Manage plugins" > select the Marketplaces tab, and paste the path to the `rse-plugins` clone.
-
-
 
 ## The `dev` plugin
 
@@ -65,9 +31,6 @@ Currently, the plugin has two workflows:
 
 
 You can start a workflow explicitly with `/dev:<skill>` (e.g. `/dev:proposal`). The main Claude agent can also start one itself when the conversation matches the skill's `when_to_use` description.
-
-
-
 
 
 <details>
@@ -144,6 +107,40 @@ The skills in this plugin aim to support scientists and researchers who write co
 | `release` | Gets a repo ready to cite and archive: writes or updates `CITATION.cff`, checks the licence is consistent, and lists the Zenodo/GitHub steps that mint a DOI. |
 
 Start it with `/science:release [version]`. It edits files only after you agree. It never tags, pushes, or creates GitHub releases: it gives you the commands to run instead.
+
+
+## Installation
+First add the marketplace, then install the plugins you want from it.
+
+From Claude Code:
+```
+/plugin marketplace add sfmig/rse-plugins
+
+# To install the dev plugins:
+/plugin install dev@rse-plugins
+
+# To install the science plugins:
+/plugin install science@rse-plugins
+```
+
+From a local clone:
+```
+git clone https://github.com/sfmig/rse-plugins.git
+```
+then, in Claude Code:
+```
+/plugin marketplace add /path/to/rse-plugins
+
+# To install the dev plugins:
+/plugin install dev@rse-plugins
+
+# To install the science plugins:
+/plugin install science@rse-plugins
+```
+
+You can also run `/plugin` and pick the plugins from the **Discover** tab. Run `/reload-plugins` (or start a new session) to load them. 
+
+In the chat interface, you can click `/` and select "Manage plugins" > select the Marketplaces tab, and paste the path to the `rse-plugins` clone.
 
 
 ## Contributing
