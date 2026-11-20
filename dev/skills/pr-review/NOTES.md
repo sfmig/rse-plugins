@@ -44,7 +44,7 @@ Revised after feedback (2026-11-20). First draft had 14 flat files; the user cut
 
 Order inside block 1 goes from general to detailed: aim and components → flow → signatures → optional predict.
 
-**Reference example: block 1.** The user approved `1-general/` (2026-11-20) as the model for the other blocks: content, style, section links, back-to-top links. Copy at `~/arc/project_Zoo_crabs/crabs-exploration/pr-review/1-general/` (untracked in that repo).
+**Reference example: block 1.** The user approved `1-general/` (2026-11-20) as the model for the other blocks: content, style, section links, back-to-top links. Copy of the full package, as of 2026-11-20: [`example/`](example/README.md).
 
 ### Methods that worked
 

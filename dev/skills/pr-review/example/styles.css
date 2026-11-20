@@ -1,0 +1,27 @@
+/* Diff blocks: colour whole added / removed lines, as on GitHub.
+   Quarto marks a "+" line with span.va and a "-" line with span.st. */
+pre.diff code > span {
+  display: inline-block;
+  width: 100%;
+}
+pre.diff code > span:has(> span.va) {
+  background: #e6ffec;
+}
+pre.diff code > span:has(> span.st) {
+  background: #ffebe9;
+}
+pre.diff span.va {
+  color: #116329;
+}
+pre.diff span.st {
+  color: #82071e;
+}
+
+/* Headings that are file paths: plain text size and colour */
+h2 code,
+h3 code {
+  font-size: 0.8em;
+  color: inherit;
+  background: none;
+  padding: 0;
+}
