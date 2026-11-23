@@ -20,7 +20,7 @@
 
 * Local branch `smg/add-ellipse-params-to-tracks-atomic`. 
 * Not pushed. 
-* Zero diff with original branch
+* Zero diff with the original branch up to `1b9c04f`, the commit whose files match the atomic tip. New commits on the original branch make it stale: see "Keep it up to date".
 * Commits ordered by: plumbing → core → wiring → tests → docs.
 
 <details>

@@ -2,7 +2,7 @@
 
 This file shows some of the key diffs and where each change sits in the pipeline. Section names match the bold box names  in `Workflow` (`2-flow.md`).
 
-Selection: every top-level function or UPPER_CASE constant added, removed or with changed parameters (listed by a script comparing `d005d99` and the branch tip), plus config keys and two behaviour-only changes (`load_mask_config`, `open_video`) picked by reading the diff.
+Selection: every top-level function or UPPER_CASE constant added, removed or with changed parameters, plus config keys and two behaviour-only changes (`load_mask_config`, `open_video`) picked by reading the diff.
 
 ## Load config, shard check
 

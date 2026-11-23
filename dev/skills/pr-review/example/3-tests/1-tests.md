@@ -3,7 +3,7 @@
 ## Review with difit, one test file per tab
 
 ```bash
-pr-review/review.sh tests      # resume at row N: pr-review/review.sh tests N
+pr-review/scripts/review.sh tests      # resume at row N: pr-review/scripts/review.sh tests N
 ```
 
 Comments are saved to `pr-review/comments/tests-NN.json`. How saving works: `Review with difit`.

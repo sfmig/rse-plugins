@@ -1,6 +1,6 @@
 # Predict (optional)
 
-Fill in "My sketch" before reading on. Then compare with "PR does".
+Fill in "My sketch" before reading on. Then compare with "PR does". Rows marked "no": look at them first in the next section.
 
 | Question | My sketch | PR does | Same? |
 |---|---|---|---|
@@ -13,4 +13,4 @@ Fill in "My sketch" before reading on. Then compare with "PR does".
 | How is the run's config recorded? | | group attr, `crabs/mask/mask_video.py:633` | |
 | What happens on a bad clip video? | | error, `crabs/mask/mask_video.py:389`, `:497` | |
 
-Rows marked "no": look at them first in block 2.
+

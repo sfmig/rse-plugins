@@ -40,16 +40,19 @@ Revised after feedback (2026-11-20). First draft had 14 flat files; the user cut
 | | `questions.json` | Skeptical questions as difit comments |
 | | `3-red-flags.md` | AI-specific checks, read last |
 | 3. Tests | `1-tests.md` | Test plan table for difit; behaviours tested and not tested |
-| root | `review.sh` | Runs difit one item per tab, saves comments to `comments/` |
+| `scripts/` | `review.sh` | Runs difit one item per tab, saves comments to `comments/`; read-only on git |
+| | `extend-atomic.sh` | Adds the PR branch's new commits to the end of the atomic branch |
+| | `config.sh` | Branch names worked out from git; helpers shared by both scripts |
 
 Order inside block 1 goes from general to detailed: aim and components → flow → signatures → optional predict.
 
-**Reference example: block 1.** The user approved `1-general/` (2026-11-20) as the model for the other blocks: content, style, section links, back-to-top links. Copy of the full package, as of 2026-11-20: [`example/`](example/README.md).
+**Reference example: block 1.** The user approved `1-general/` (2026-11-20) as the model for the other blocks: content, style, section links, back-to-top links. Copy of the full package, as of 2026-11-23: [`example/`](example/README.md).
 
 ### Methods that worked
 
 - **Verify every file:line** with `sed -n` / `grep -n` before writing it. Estimated line numbers were often off by a few lines.
 - **Atomic scratch branch.** Rebuild the branch as plumbing → core → wiring → tests → docs commits. Build intermediate file versions with exact string replacements. Assert the last stage equals the branch tip. Commit with a temporary index (`GIT_INDEX_FILE`, `commit-tree`, `update-ref`), so the working tree is untouched. Check: `git diff original scratch` is empty. Do not push.
+- **Keep the atomic branch current by extending, not rebuilding.** Find the commit on the PR branch whose tree hash equals the atomic tip's (`git log --format='%H %T'`). Replay each later commit as `commit-tree <its tree> -p <atomic tip>`: same files by construction, so no checkout and no conflicts. A rebuild would change every hash, item number and saved comment.
 - **difit comments.** Anchor each comment to an *added* line of the diff (new side), or it may not show. Check by parsing `git diff -U0`.
 - **Red flags by search.** Duplicate-helper check = grep the repo for each new helper's core call.
 - **Rename detection.** Diff the old and new module to confirm moved code is byte-identical; mark it "skim only".
@@ -57,7 +60,10 @@ Order inside block 1 goes from general to detailed: aim and components → flow 
 ### Gotchas
 
 - zsh: `$VAR:c...` is read as a modifier. Write `"${VAR}:path"`.
-- npm in the sandbox: set `npm_config_cache=$TMPDIR/npmcache`.
+- npm in the sandbox: set `npm_config_cache=$TMPDIR/npmcache`. For difit's CLI usage without running it, read the cached `~/.npm/_npx/*/node_modules/difit/README.md`.
+- `set -e` + `read -r -a x < <(... | tr '\n' ' ')`: `read` returns 1 at end of input with no final newline, so the script stops. Add `|| true`.
+- `set -o pipefail` + `git log | awk '... { exit }'` (or `| head`): git log gets SIGPIPE and the script stops. Let awk read all input.
+- macOS ships bash 3.2: no `mapfile`. Use `while read` or word splitting.
 - `git worktree add` needs the sandbox off.
 - Mermaid breaks on `;` in labels (statement end), and is fragile with `{}`, `%`, `#`.
 - GitHub's Mermaid renderer disables `click` links. Add a markdown table of links under the diagram.
@@ -89,6 +95,14 @@ Add new feedback here when the user asks. Newest last.
 | 19 | Link the sections listed at the top of a file | `* [Flow diagram](#flow-diagram)`; anchor = GitHub/Pandoc slug of the `##` heading |
 | 20 | "Back to top" right under each `##` heading, standard style | `[↑ Back to top](#top)` on the line after the heading; no arrow inside the heading (changes its anchor) |
 | 21 | Block 1 (`1-general/`) is a good example to follow | Reference example, see above |
+| 22 | Unclear what closing the tab does | "Managing tabs" section: difit exits when its tab closes, then the loop opens the next item; a reload counts as a close |
+| 23 | Resume from a commit hash, not only a number | `review.sh atomic <sha>`; an all-digit short hash is read as a position |
+| 24 | Option to review the whole PR at once | `review.sh all`: base..branch in one tab. No arguments still prints usage, so the bare command is harmless |
+| 25 | How is the atomic branch created, and kept current? | Built once by the agent (needs judgment). `review.sh atomic` warns when it no longer matches the PR branch; `extend-atomic.sh` appends the new commits |
+| 26 | Work facts out from git instead of recording them | Matching commit found by tree hash; `BRANCH`, `BASE`, `ATOMIC` worked out in `config.sh`, env overrides |
+| 27 | A script that changes branches should be separate from the review runner | `scripts/`: `review.sh` (read-only), `extend-atomic.sh`, shared `config.sh` |
+| 28 | Names must say what the code does | "built from" read as "branched off" → "the commit whose files match the atomic tip"; `refresh` read as "rebuild" → `extend-atomic.sh`; function `last_commit_matching_atomic` |
+| 29 | Code comments: short; what it does, plus why for the non-obvious part | User cut a 10-line comment to 3 lines: what it prints, the empty case, why awk reads to the end |
 
 ## Quarto support (to add to the skill)
 
@@ -126,7 +140,7 @@ Gotchas:
 - Do not add `id="top"` anywhere (e.g. `[]{#top}` in `index.qmd`): it overrides the browser's built-in page-top for `#top`.
 - Checked with Quarto 1.9.37, mermaid 11.4.1.
 
-## difit runner (`review.sh`)
+## difit runner (`scripts/`)
 
 Facts checked in difit 5.0.12 source and by a live run:
 
@@ -148,6 +162,12 @@ How `review.sh` uses them:
 | Preload questions on the right commit | `git blame` the question's line on the atomic branch |
 | Item lists editable by the reviewer | parse markdown table rows that end in `[ ]` / `[x]` |
 | Testing without a browser | `DIFIT_EXTRA="--no-open"`, add comments with `difit comment add` |
+| Testing without difit | `DIFIT=echo`: the log shows the exact difit arguments |
+| Whole PR in one tab | `difit $BRANCH $BASE --clean`, saved notes re-imported, so a rerun doesn't duplicate them |
+| Resume by position or hash | `review.sh atomic N` or `<sha>`; hash → position with `rev-list \| grep -nx` |
+| Warn when the atomic branch is stale | `git diff --quiet atomic branch`; y/N prompt only in a terminal |
+| Works for any PR | `BRANCH` = checked-out branch (drop `-atomic` only if that branch exists), `BASE` = `merge-base main`, `ATOMIC` = `$BRANCH-atomic` |
+| Test branch-changing scripts safely | `ATOMIC=tmp-copy` on a throwaway copy of the atomic branch |
 
 UNSURE: whether imported questions duplicate when the browser also restores them from localStorage (README says duplicates are skipped).
 
@@ -164,6 +184,7 @@ UNSURE: whether imported questions duplicate when the browser also restores them
 | Mermaid valid | `mmdc`, or `check-mermaid.sh` | idea |
 | Atomic branch mechanics | temp index + `commit-tree`; final-tree equality check | used |
 | Atomic branch grouping | none; needs judgment | LLM |
+| Atomic branch update | tree-hash match + `commit-tree` per new commit (`extend-atomic.sh`) | used |
 | Question → commit | `git blame` on atomic branch | used |
 | difit runs and saving | `review.sh` | used |
 | Tests added/removed | `pytest --collect-only -q` at base vs tip, diff the lists | idea |
@@ -186,4 +207,5 @@ UNSURE: whether imported questions duplicate when the browser also restores them
 - Reuse `dev/skills/writing-style` rules for the summary file.
 - Optional step: strip comments on the scratch branch (makes the final diff non-empty).
 - Signatures view as two panes: flowchart fixed on the left, hover a box to show its diff on the right (custom JS in Quarto).
+- Save the atomic grouping (which original change went to which commit), so a full rebuild after a big PR change can reuse it. The trial's `build_stages.py` was one-off string replacements in a session scratchpad.
 - Merge all `comments/*.json` into one prompt for the agent at the end of block 2.
