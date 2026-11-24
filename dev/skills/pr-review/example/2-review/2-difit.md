@@ -30,7 +30,6 @@ To resume from a given item, add its number (or a commit hash in atomic mode):
 
 `review.py` opens one review page in the browser:
 
-* The sidebar lists the items (commits or sessions). The number next to an item is its open threads (hover it to check).
 * The bar above the diff has **Prev** / **Next** buttons (or <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>Alt</kbd>+<kbd>↓</kbd>). 
     * In commit-by-commit mode it also shows the commit's subject line (hover it for the full message).
 * To stop the review, use the page's **Stop review** button or `CTRL+C` in the terminal.
@@ -94,16 +93,17 @@ Below are some AI-suggested questions. Each question only appears on the commit 
 
 ## After the review
 
+When done with your comments, you can ask the agent to read the JSON file and address the comments and/or questions with replies. Example prompt:
+
+> Have a look at the comments from the PR review here. Answer the questions briefly, clarify ambiguous things and for suggested changes determine whether to accept them or not. Can you add your comments to the json as replies to a thread?
+
+Then you can review the answers by reloading difit for that pass. You can settle any open threads and resolve. Once you are happy, you can ask the agent to implement the suggestions. Example prompt:
+
+> Have a look at the comments in /pr-review/comments/pass-N/comments.json and implement anything that is resolved in `<original-branch>` with atomic commits
+
 You can optionally review the section on AI-specific red flags before finalising the review. 
 
-When done, ask the agent to read the comments under `pr-review/comments/` and address the comments and/or questions.
-
-Prompt: Have a look at the comments from the PR review here. Answer the questions briefly, clarify ambiguous things and for suggested changes determine whether to accept them or not. can you add your comments to the json as replies to a thread?
-
-
-Then I resolved any open questions or conflicts. Then I asked the agent to 
-
-You can optionally delete the atomic branch when done too:  have a look at the comments in /pr-review/comments/pass-N/comments.json and implement anything that is resolved in smg/add-ellipse-params-to-tracks with atomic commits
+You can optionally delete the atomic branch when done too:  
 
 ```bash
 git branch -D smg/add-ellipse-params-to-tracks-atomic
