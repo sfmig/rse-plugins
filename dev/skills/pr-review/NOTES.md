@@ -40,9 +40,10 @@ Revised after feedback (2026-11-20). First draft had 14 flat files; the user cut
 | | `questions.json` | Skeptical questions as difit comments |
 | | `3-red-flags.md` | AI-specific checks, read last |
 | 3. Tests | `1-tests.md` | Test plan table for difit; behaviours tested and not tested |
-| `scripts/` | `review.py` | Review page + difit, saves comments to `comments/pass-N/`; `review.py extend` adds the PR branch's new commits to the atomic branch |
+| `scripts/` | `review.py` | Review page + difit, saves comments to `comments/pass-N/`; read-only on git |
 | | `comments.py` | Comments file of a pass; follows commit lines to the tip with `git blame` |
 | | `page.html` | The review page |
+| | `atomic.py` | The PR's branches; `atomic.py extend` adds the PR branch's new commits to the atomic branch |
 
 Order inside block 1 goes from general to detailed: aim and components → flow → signatures → optional predict.
 
@@ -71,7 +72,7 @@ Order inside block 1 goes from general to detailed: aim and components → flow 
 ## User feedback
 
 Add new feedback here when the user asks. Newest last.
-Rows 12–14 and 22–29 describe the first, bash difit runner; it was replaced on 2026-11-24 (rows 30–43).
+Rows 12–14 and 22–29 describe the first, bash difit runner; it was replaced on 2026-11-24 (rows 30–44).
 
 | # | Feedback | Applied as |
 |---|---|---|
@@ -116,7 +117,8 @@ Rows 12–14 and 22–29 describe the first, bash difit runner; it was replaced 
 | 39 | Minimal top bar | Only the buttons: « (hide sidebar), Prev, Next, Stop. Atomic mode adds the commit subject (hover = full message); sidebar shows only the short hash. No subtitle under the heading |
 | 40 | Collapsible sidebar | « / » button and Alt+B; choice kept in localStorage |
 | 41 | Keep the plumbing simple and minimal; drop features if needed | Dropped: bash wrapper, npx lookup, logs, lock file and `stop`, pool of difit servers and prefetch, tabs mode, `--continue`, lazy passes, rename following, tip→commit mapping |
-| 42 | Readable by a human and modular; HTML separate | 3 files in `scripts/`: `review.py` (command, branches, items, difit, page server), `comments.py` (no difit or HTTP: pass file, saving, commit→tip), `page.html` (plain HTML/CSS/JS, data from `/api/state`). Kept under `scripts/`, not a new `review/` folder. `extend-atomic.sh` became `review.py extend`: one command, against row 27; the review modes still never change branches |
+| 42 | Readable by a human and modular; HTML separate | 3 files in `scripts/`: `review.py` (command, branches, items, difit, page server), `comments.py` (no difit or HTTP: pass file, saving, commit→tip), `page.html` (plain HTML/CSS/JS, data from `/api/state`). Kept under `scripts/`, not a new `review/` folder |
+| 44 | Where does extending the atomic branch belong? | Own file `atomic.py` (branches + `extend`), as row 27: it maintains the atomic branch (block 2, documented in `1-atomic-branch.md`), and it is the only code that changes a branch. `review.py` imports `Branches` from it and never changes a branch. Room for the other deterministic atomic-branch steps (zero-diff check, commit list) |
 | 43 | Scripts independent of the PR to review | Branches from git (checked-out branch, `<branch>-atomic`, origin's default branch; `BRANCH`/`MAIN` override). Inputs only from the package's files: session table, commits table, `questions.json` |
 
 ## Quarto support (to add to the skill)
@@ -157,13 +159,13 @@ Gotchas:
 
 ## difit runner (`scripts/`)
 
-Rewritten 2026-11-24 (feedback 30–43). Example: `example/scripts/`, about 800 lines in 3 files.
+Rewritten 2026-11-24 (feedback 30–44). Example: `example/scripts/`, about 800 lines in 4 files.
 
 ```
 review.py atomic [N|SHA] [--pass N]   one atomic commit at a time
 review.py sessions [N]   [--pass N]   rows of the session table
 review.py all            [--pass N]   base..branch, like "Files changed"
-review.py extend                      add the PR branch's new commits to the atomic branch
+atomic.py extend                      add the PR branch's new commits to the atomic branch
 ```
 
 How it works:
@@ -179,7 +181,7 @@ How it works:
 | Comments in every mode | `commit` place for threads written on a commit; `tip` place found each run with `git blame base..rev`: a line is named by (commit that last changed it, line there), same name in every revision |
 | Outdated | No tip line → shown inline only on the commit; listed in the sidebar in tip modes |
 | Questions on the right commit | `git blame` the tip line on the atomic branch → (commit, line there) |
-| Atomic branch behind the PR branch | Tip mapping off for the run, one note printed, suggests `review.py extend` |
+| Atomic branch behind the PR branch | Tip mapping off for the run, one note printed, suggests `atomic.py extend` |
 | Session diffs | `git diff -M base branch -- files` on stdin (`difit -`) |
 | Testing without a browser | `REVIEW_NO_BROWSER=1`; act as the reviewer with `POST /api/comments` on difit; a copy of `pr-review/` keeps real comments safe |
 
@@ -215,7 +217,7 @@ UNSURE: replies of two threads on the same line may attach to the wrong thread o
 | Mermaid valid | `mmdc`, or `check-mermaid.sh` | idea |
 | Atomic branch mechanics | temp index + `commit-tree`; final-tree equality check | used |
 | Atomic branch grouping | none; needs judgment | LLM |
-| Atomic branch update | tree-hash match + `commit-tree` per new commit (`review.py extend`) | used |
+| Atomic branch update | tree-hash match + `commit-tree` per new commit (`atomic.py extend`) | used |
 | Question → commit | `git blame` on atomic branch | used |
 | difit runs and saving | `review.py` | used |
 | Comment place, commit → tip | `git blame base..rev` line names | used |

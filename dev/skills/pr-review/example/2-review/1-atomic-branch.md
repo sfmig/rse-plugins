@@ -62,6 +62,19 @@ Weight rule: 🔴 **high** = changes data written to the store; 🟠 **med** = c
 | 15 | `b493975` | Tests: `mask_video` | `test_mask_video.py` | +198/-22 | 🟢 low |
 | 16 | `a70f978` | Docs: README and HPC guide | `README.md`, `MaskTrackedCrabsHPC.md` | +65/-12 | 🟢 low |
 
+## Keep it up to date
+
+If commits are added to the PR branch after the atomic branch was built, add them to the end of the atomic branch, with the same message, author and date:
+
+```bash
+pr-review/scripts/atomic.py extend
+```
+
+It looks for the commit on the PR branch that has the same files as the atomic tip, and replays the commits after it. It prints the new commits and how to undo. If the PR branch was rebased or amended, there is no such commit, so it stops: ask the agent to rebuild the atomic branch instead.
+
+`atomic.py` is the only script that changes a branch; `review.py` only reads.
+
+
 ## Limits
 
 - Only the final tree is checked equal. Middle commits were not run.

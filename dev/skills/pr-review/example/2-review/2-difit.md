@@ -8,9 +8,10 @@ The script has three files, in `pr-review/scripts/`:
 
 | File | What it does |
 |---|---|
-| `review.py` | the command: branches, the list of items, `difit`, the review page's server |
+| `review.py` | the command: the list of items, `difit`, the review page's server. It never changes a branch |
 | `comments.py` | the comments file of a pass, and following a commit's lines to the tip |
 | `page.html` | the review page |
+| `atomic.py` | the PR's branches, and `atomic.py extend` to update the atomic branch |
 
 
 ## Workflows
@@ -34,20 +35,17 @@ The branches come from git: the PR branch is the one checked out, its atomic cop
 
 `review.py` opens one review page in the browser:
 
-* The sidebar lists the items (commits or sessions) with the number of open threads. Items you have opened are greyed out. In commit-by-commit mode, the commits are listed by short hash, with their weight colour (🔴 high, 🟠 med, 🟢 low).
+* The sidebar lists the items (commits or sessions) with the number of open threads. 
 * The bar above the diff has **Prev** / **Next** buttons (or <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>Alt</kbd>+<kbd>↓</kbd>). In commit-by-commit mode it also shows the commit's subject line (hover it for the full message).
-* The **«** button (or <kbd>Alt</kbd>+<kbd>B</kbd>) hides or shows the sidebar, for more room for the diff. The page remembers the choice.
 * One `difit` server shows the chosen item. Choosing another item saves the comments and starts a new server (about half a second).
-* Closing or reloading the page does not stop the review: reopen it at the address printed in the terminal.
-* To stop, use the page's **Stop review** button or `CTRL+C` in the terminal. The comments are saved first.
+* To stop the review, use the page's **Stop review** button or `CTRL+C` in the terminal. The comments are saved first.
 
 
 ## Passes
 
-Each run starts a new **pass**, saved to `pr-review/comments/pass-N/comments.json`. To add to an earlier pass instead, use `--pass N`, e.g. `pr-review/scripts/review.py atomic 7 --pass 2`.
-
+* Each run starts a new review **pass**. Its comments are saved to `pr-review/comments/pass-N/comments.json`. 
+* To add comments to an earlier pass, use `--pass N`, e.g. `pr-review/scripts/review.py atomic 7 --pass 2`.
 * The AI-suggested questions ([Preloaded questions](#preloaded-questions)) are added to each new pass, except the ones an earlier pass resolved or deleted.
-* Pass 0 is the first review of this PR, converted from `comments/atomic_pass0.json`.
 
 
 ## Comments
@@ -67,15 +65,7 @@ Each run starts a new **pass**, saved to `pr-review/comments/pass-N/comments.jso
 
 ## When the atomic branch is behind
 
-If commits were added to the PR branch after the atomic branch was built, `review.py` says so. Until the atomic branch is updated, comments written on a commit are not shown at the tip, and the preloaded questions are not placed on commits.
-
-To add the new commits of the PR branch to the end of the atomic branch, run:
-
-```bash
-pr-review/scripts/review.py extend
-```
-
-It looks for the commit on the PR branch that has the same files as the atomic tip. If the PR branch was rebased or amended, there is no such commit, so it stops and asks for a rebuild of the atomic branch instead.
+If commits were added to the PR branch after the atomic branch was built, `review.py` says so. Until the atomic branch is updated, comments written on a commit are not shown at the tip, and the preloaded questions are not placed on commits. To update it, see [Keep it up to date](1-atomic-branch.md#keep-it-up-to-date).
 
 
 ## Session plan table

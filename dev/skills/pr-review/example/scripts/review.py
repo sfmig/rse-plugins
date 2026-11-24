@@ -4,16 +4,15 @@
   review.py atomic [N|SHA] [--pass N]   one atomic commit at a time, from commit N (or SHA)
   review.py sessions [N]   [--pass N]   the session plan in 2-review/2-difit.md, from session N
   review.py all            [--pass N]   the whole PR, like GitHub's "Files changed"
-  review.py extend                      add the PR branch's new commits to the atomic branch
 
 A review page opens in the browser: the items on the left, the chosen one in difit.
 Each run starts a new pass, saved in comments/pass-N/comments.json; --pass N adds to
 pass N instead. Stop with the page's Stop button or Ctrl+C.
 
-Branches: the PR branch is the one checked out (or set BRANCH=...), its atomic copy
-is <branch>-atomic, and main is origin's default branch (or set MAIN=...).
+Branches: see atomic.py. This script never changes a branch.
 Needs difit: npm i -g difit@5.0.12
 """
+
 import argparse
 import json
 import os
@@ -32,127 +31,99 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.request import urlopen
 
+from atomic import Branches, git, git_ok
 from comments import Pass, TipLines, content, difit_comments
 
-PACKAGE = Path(__file__).resolve().parent.parent      # pr-review/
+PACKAGE = Path(__file__).resolve().parent.parent  # pr-review/
 COMMENTS = PACKAGE / "comments"
 QUESTIONS = PACKAGE / "2-review" / "questions.json"
-SESSIONS = PACKAGE / "2-review" / "2-difit.md"        # the session plan table
-COMMIT_LIST = PACKAGE / "2-review" / "1-atomic-branch.md"   # the atomic commits table, with weights
+SESSIONS = PACKAGE / "2-review" / "2-difit.md"  # the session plan table
+COMMIT_LIST = (
+    PACKAGE / "2-review" / "1-atomic-branch.md"
+)  # the atomic commits table, with weights
 PAGE = Path(__file__).resolve().parent / "page.html"
-
-
-def git(*args, check=True):
-    r = subprocess.run(["git", *args], capture_output=True, text=True)
-    if check and r.returncode:
-        sys.exit(f"git {' '.join(args)} failed:\n{r.stderr}")
-    return r.stdout.strip() if r.returncode == 0 else ""
-
-
-def git_ok(*args):
-    return subprocess.run(["git", *args], capture_output=True).returncode == 0
-
-
-# ------------------------------------------------------------------ branches
-@dataclass
-class Branches:
-    branch: str      # the PR branch
-    atomic: str      # its atomic copy, built by the agent
-    base: str        # where the PR branch split off from main (full hash)
-
-    @classmethod
-    def from_git(cls):
-        branch = os.environ.get("BRANCH") or git("branch", "--show-current")
-        if branch.endswith("-atomic") and git_ok("rev-parse", "--verify", "--quiet", f"refs/heads/{branch[:-7]}"):
-            branch = branch[:-7]     # the atomic copy is checked out: review the branch it copies
-        main = (os.environ.get("MAIN")
-                or git("symbolic-ref", "--short", "refs/remotes/origin/HEAD", check=False).removeprefix("origin/")
-                or "main")
-        if not branch or branch == main:
-            sys.exit(f"Check out the PR branch first (or set BRANCH=<branch>). Now on: {branch or 'no branch'}")
-        return cls(branch, f"{branch}-atomic", git("merge-base", main, branch))
-
-    def has_atomic(self):
-        return git_ok("rev-parse", "--verify", "--quiet", f"refs/heads/{self.atomic}")
-
-    def atomic_up_to_date(self):
-        return git_ok("diff", "--quiet", self.atomic, self.branch)
-
-    def commit_matching_atomic(self):
-        """The newest commit on the PR branch with the same files as the atomic tip, or None."""
-        tree = git("rev-parse", f"{self.atomic}^{{tree}}")
-        for row in git("log", "--format=%H %T", f"{self.base}..{self.branch}").splitlines():
-            sha, commit_tree = row.split()
-            if commit_tree == tree:
-                return sha
-        return None
-
-
-def extend(b):
-    """Add the commits made on the PR branch after the one whose files match the atomic tip
-    to the end of the atomic branch, with the same message, author and date."""
-    if not b.has_atomic():
-        sys.exit(f"No branch {b.atomic}: ask the agent to build the atomic branch first.")
-    match = b.commit_matching_atomic()
-    if not match:
-        sys.exit(f"No commit on {b.branch} has the same files as {b.atomic} (rebased?). Ask the agent to rebuild it.")
-    new = git("rev-list", "--reverse", f"{match}..{b.branch}").split()
-    if not new:
-        return print(f"{b.atomic} is up to date with {b.branch}.")
-    old = tip = git("rev-parse", b.atomic)
-    for c in new:   # the atomic tip has the same files as c's parent, so c's files are the result
-        author = dict(zip(("GIT_AUTHOR_NAME", "GIT_AUTHOR_EMAIL", "GIT_AUTHOR_DATE"),
-                          git("log", "-1", "--format=%an%n%ae%n%aI", c).splitlines()))
-        tip = subprocess.run(["git", "commit-tree", f"{c}^{{tree}}", "-p", tip, "-m", git("log", "-1", "--format=%B", c)],
-                             capture_output=True, text=True, env={**os.environ, **author}, check=True).stdout.strip()
-    git("update-ref", f"refs/heads/{b.atomic}", tip, old)
-    first = int(git("rev-list", "--count", f"{b.base}..{old}")) + 1
-    print(f"Added to {b.atomic} (undo: git branch -f {b.atomic} {old[:7]}):")
-    for n, row in enumerate(git("log", "--reverse", "--format=%h %s", f"{old}..{b.atomic}").splitlines(), first):
-        print(f"  {n:2d}  {row}")
 
 
 # ------------------------------------------------------------------ items
 @dataclass
 class Item:
     """One thing to review: an atomic commit, a session, or the whole PR."""
-    name: str                      # e.g. atomic-05-501a731, sessions-02, all
+
+    name: str  # e.g. atomic-05-501a731, sessions-02, all
     title: str
-    args: list                     # what difit shows: a commit, two revisions, or "-" (a diff on stdin)
-    sha: str = None                # atomic commit
-    files: set = None              # the files of a session (None: all files)
-    detail: str = ""               # the rest of the commit message
-    weight: str = None             # high, med or low (atomic commits)
-    diff: str = field(default=None, repr=False)   # the diff of a session, sent on stdin
+    args: list  # what difit shows: a commit, two revisions, or "-" (a diff on stdin)
+    sha: str = None  # atomic commit
+    files: set = None  # the files of a session (None: all files)
+    detail: str = ""  # the rest of the commit message
+    weight: str = None  # high, med or low (atomic commits)
+    diff: str = field(
+        default=None, repr=False
+    )  # the diff of a session, sent on stdin
 
 
 def weights():
     """{short hash: weight} from the commits table of the package."""
     rows = COMMIT_LIST.read_text().splitlines() if COMMIT_LIST.exists() else []
-    found = (re.match(r"^\|\s*\d+\s*\|\s*`([0-9a-f]{7,40})`.*\|\s*\S*\s*(high|med|low)\s*\|\s*$", r) for r in rows)
+    found = (
+        re.match(
+            r"^\|\s*\d+\s*\|\s*`([0-9a-f]{7,40})`.*\|\s*\S*\s*(high|med|low)\s*\|\s*$",
+            r,
+        )
+        for r in rows
+    )
     return {m.group(1): m.group(2) for m in found if m}
 
 
 def atomic_items(b):
     w = weights()
     items = []
-    for n, sha in enumerate(git("rev-list", "--reverse", f"{b.base}..{b.atomic}").split(), 1):
-        message = [x for x in git("log", "-1", "--format=%B", sha).splitlines() if not x.startswith("Co-Authored-By:")]
+    for n, sha in enumerate(
+        git("rev-list", "--reverse", f"{b.base}..{b.atomic}").split(), 1
+    ):
+        message = [
+            x
+            for x in git("log", "-1", "--format=%B", sha).splitlines()
+            if not x.startswith("Co-Authored-By:")
+        ]
         weight = next((v for k, v in w.items() if sha.startswith(k)), None)
-        items.append(Item(f"atomic-{n:02d}-{sha[:7]}", message[0], [sha], sha=sha,
-                          detail="\n".join(message[1:]).strip(), weight=weight))
+        items.append(
+            Item(
+                f"atomic-{n:02d}-{sha[:7]}",
+                message[0],
+                [sha],
+                sha=sha,
+                detail="\n".join(message[1:]).strip(),
+                weight=weight,
+            )
+        )
     return items
 
 
 def session_items(b):
     """One item per row of the session table (rows that end in a checkbox)."""
-    rows = [r for r in SESSIONS.read_text().splitlines() if re.match(r"^\|.*\| *\[[ x]\] *\|$", r)]
+    rows = [
+        r
+        for r in SESSIONS.read_text().splitlines()
+        if re.match(r"^\|.*\| *\[[ x]\] *\|$", r)
+    ]
     items = []
     for n, row in enumerate(rows, 1):
-        files = [p for p in re.findall(r"`([^`]*)`", row)
-                 if git_ok("cat-file", "-e", f"{b.base}:{p}") or git_ok("cat-file", "-e", f"{b.branch}:{p}")]
-        items.append(Item(f"sessions-{n:02d}", f"Session {n}", ["-"], files=set(files), detail="\n".join(files),
-                          diff=git("diff", "-M", b.base, b.branch, "--", *files) + "\n"))
+        files = [
+            p
+            for p in re.findall(r"`([^`]*)`", row)
+            if git_ok("cat-file", "-e", f"{b.base}:{p}")
+            or git_ok("cat-file", "-e", f"{b.branch}:{p}")
+        ]
+        items.append(
+            Item(
+                f"sessions-{n:02d}",
+                f"Session {n}",
+                ["-"],
+                files=set(files),
+                detail="\n".join(files),
+                diff=git("diff", "-M", b.base, b.branch, "--", *files) + "\n",
+            )
+        )
     return items
 
 
@@ -169,22 +140,40 @@ class Difit:
 
     def __init__(self, item, comments):
         shown = comments.shown_on(item.sha, item.files)
-        self.before = {t["id"]: content(t["messages"]) for t, _ in shown}   # to see what changes
+        self.before = {
+            t["id"]: content(t["messages"]) for t, _ in shown
+        }  # to see what changes
         imports = [c for t, place in shown for c in difit_comments(t, place)]
         self.url = f"http://localhost:{free_port()}"
-        args = ["difit", *item.args, "--port", self.url.rsplit(":", 1)[1], "--no-open", "--keep-alive", "--clean"]
+        args = [
+            "difit",
+            *item.args,
+            "--port",
+            self.url.rsplit(":", 1)[1],
+            "--no-open",
+            "--keep-alive",
+            "--clean",
+        ]
         if imports:
             args += ["--comment", json.dumps(imports)]
         self.errors = tempfile.TemporaryFile("w+")
-        self.proc = subprocess.Popen(args, stdin=subprocess.PIPE if item.diff else subprocess.DEVNULL,
-                                     stdout=subprocess.DEVNULL, stderr=self.errors, text=True, start_new_session=True)
+        self.proc = subprocess.Popen(
+            args,
+            stdin=subprocess.PIPE if item.diff else subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=self.errors,
+            text=True,
+            start_new_session=True,
+        )
         if item.diff:
             self.proc.stdin.write(item.diff)
             self.proc.stdin.close()
-        while self.threads() is None:          # wait until it answers (about 0.5 s)
+        while self.threads() is None:  # wait until it answers (about 0.5 s)
             if self.proc.poll() is not None:
                 self.errors.seek(0)
-                raise RuntimeError(f"difit did not start for {item.name}:\n{self.errors.read()}")
+                raise RuntimeError(
+                    f"difit did not start for {item.name}:\n{self.errors.read()}"
+                )
             time.sleep(0.05)
 
     def threads(self):
@@ -196,11 +185,11 @@ class Difit:
             return None
 
     def stop(self):
+        self.proc.terminate()    # no-op if difit already quit
         try:
-            os.killpg(self.proc.pid, signal.SIGTERM)
             self.proc.wait(5)
-        except (ProcessLookupError, subprocess.TimeoutExpired):
-            pass
+        except subprocess.TimeoutExpired:
+            self.proc.kill()
 
 
 # ------------------------------------------------------------------ the review page
@@ -208,8 +197,14 @@ class Review:
     """The items, the pass, and the one difit server showing the chosen item."""
 
     def __init__(self, mode, items, comments, pass_no, start):
-        self.mode, self.items, self.comments, self.pass_no, self.start = mode, items, comments, pass_no, start
-        self.shown = None      # (item, Difit) on screen
+        self.mode, self.items, self.comments, self.pass_no, self.start = (
+            mode,
+            items,
+            comments,
+            pass_no,
+            start,
+        )
+        self.shown = None  # (item, Difit) on screen
         self.lock = threading.Lock()
 
     def open(self, i):
@@ -242,15 +237,37 @@ class Review:
         for t in self.comments.not_shown(atomic):
             place = t.get("commit") or t.get("tip")
             line = place["position"]["line"]
-            others.append({"file": place["filePath"],
-                           "line": line if isinstance(line, int) else f"{line['start']}-{line['end']}",
-                           "sha": (t.get("commit") or {}).get("sha"), "body": t["messages"][0]["body"],
-                           "replies": len(t["messages"]) - 1})
-        return {"mode": self.mode, "pass": self.pass_no, "start": self.start, "others": others,
-                "othersTitle": "Only on the whole PR" if atomic else "Outdated: on an earlier commit",
-                "items": [{"name": it.name, "title": it.title, "detail": it.detail, "weight": it.weight,
-                           "sha": it.sha, "threads": len(self.comments.shown_on(it.sha, it.files))}
-                          for it in self.items]}
+            others.append(
+                {
+                    "file": place["filePath"],
+                    "line": line
+                    if isinstance(line, int)
+                    else f"{line['start']}-{line['end']}",
+                    "sha": (t.get("commit") or {}).get("sha"),
+                    "body": t["messages"][0]["body"],
+                    "replies": len(t["messages"]) - 1,
+                }
+            )
+        return {
+            "mode": self.mode,
+            "pass": self.pass_no,
+            "start": self.start,
+            "others": others,
+            "othersTitle": "Only on the whole PR"
+            if atomic
+            else "Outdated: on an earlier commit",
+            "items": [
+                {
+                    "name": it.name,
+                    "title": it.title,
+                    "detail": it.detail,
+                    "weight": it.weight,
+                    "sha": it.sha,
+                    "threads": len(self.comments.shown_on(it.sha, it.files)),
+                }
+                for it in self.items
+            ],
+        }
 
 
 def serve(review, stopped):
@@ -261,7 +278,11 @@ def serve(review, stopped):
             pass
 
         def reply(self, body, kind="application/json", code=200):
-            data = body.encode() if isinstance(body, str) else json.dumps(body).encode()
+            data = (
+                body.encode()
+                if isinstance(body, str)
+                else json.dumps(body).encode()
+            )
             self.send_response(code)
             self.send_header("Content-Type", kind)
             self.end_headers()
@@ -297,7 +318,11 @@ def serve(review, stopped):
 # ------------------------------------------------------------------ main
 def passes():
     """{number: comments.json} of the passes so far."""
-    return {int(d.name[5:]): d / "comments.json" for d in COMMENTS.glob("pass-*") if d.name[5:].isdigit()}
+    return {
+        int(d.name[5:]): d / "comments.json"
+        for d in COMMENTS.glob("pass-*")
+        if d.name[5:].isdigit()
+    }
 
 
 def start_index(start, items):
@@ -307,7 +332,13 @@ def start_index(start, items):
     if start.isdigit() and len(start) < 7:
         i = int(start) - 1
     else:
-        full = git("rev-parse", "--verify", "--quiet", f"{start}^{{commit}}", check=False)
+        full = git(
+            "rev-parse",
+            "--verify",
+            "--quiet",
+            f"{start}^{{commit}}",
+            check=False,
+        )
         i = next((n for n, it in enumerate(items) if it.sha == full), -1)
     if not 0 <= i < len(items):
         sys.exit(f"No item {start}: there are {len(items)}.")
@@ -316,15 +347,15 @@ def start_index(start, items):
 
 def main():
     p = argparse.ArgumentParser(usage=__doc__, add_help=False)
-    p.add_argument("mode", choices=["atomic", "sessions", "all", "extend"])
+    p.add_argument("mode", choices=["atomic", "sessions", "all"])
     p.add_argument("start", nargs="?")
     p.add_argument("--pass", dest="pass_no", type=int)
     args = p.parse_args()
-    sys.stdout.reconfigure(line_buffering=True)   # print each line at once, also into a log
+    sys.stdout.reconfigure(
+        line_buffering=True
+    )  # print each line at once, also into a log
     os.chdir(git("rev-parse", "--show-toplevel"))
     b = Branches.from_git()
-    if args.mode == "extend":
-        return extend(b)
     if not shutil.which("difit"):
         sys.exit("difit is not installed: npm i -g difit@5.0.12")
 
@@ -333,34 +364,51 @@ def main():
     if b.has_atomic() and b.atomic_up_to_date():
         tip_lines = TipLines(b.base, git("rev-parse", b.atomic))
     elif b.has_atomic():
-        print(f"Note: {b.atomic} is behind {b.branch}, so comments written on a commit are not shown at the tip.\n"
-              f"      To update it: {Path(__file__).name} extend")
+        print(
+            f"Note: {b.atomic} is behind {b.branch}, so comments written on a commit are not shown at the tip.\n"
+            "      To update it: pr-review/scripts/atomic.py extend"
+        )
     elif args.mode == "atomic":
-        sys.exit(f"No branch {b.atomic}: ask the agent to build the atomic branch first.")
+        sys.exit(
+            f"No branch {b.atomic}: ask the agent to build the atomic branch first."
+        )
 
     found = passes()
     if args.pass_no is not None and args.pass_no not in found:
         sys.exit(f"No pass {args.pass_no}. Passes: {sorted(found) or 'none'}")
-    pass_no = args.pass_no if args.pass_no is not None else max(found, default=0) + 1
+    pass_no = (
+        args.pass_no if args.pass_no is not None else max(found, default=0) + 1
+    )
     comments = Pass(COMMENTS / f"pass-{pass_no}" / "comments.json", tip_lines)
     if QUESTIONS.exists():
-        earlier = [Pass(path, None) for n, path in found.items() if n != pass_no and path.exists()]
+        earlier = [
+            Pass(path, None)
+            for n, path in found.items()
+            if n != pass_no and path.exists()
+        ]
         comments.add_questions(json.loads(QUESTIONS.read_text()), earlier)
 
-    items = {"atomic": atomic_items, "sessions": session_items,
-             "all": lambda b: [Item("all", "Whole PR", [b.branch, b.base])]}[args.mode](b)
-    review = Review(args.mode, items, comments, pass_no, start_index(args.start, items))
+    items = {
+        "atomic": atomic_items,
+        "sessions": session_items,
+        "all": lambda b: [Item("all", "Whole PR", [b.branch, b.base])],
+    }[args.mode](b)
+    review = Review(
+        args.mode, items, comments, pass_no, start_index(args.start, items)
+    )
 
     stopped = threading.Event()
     signal.signal(signal.SIGINT, lambda *_: stopped.set())
     signal.signal(signal.SIGTERM, lambda *_: stopped.set())
     httpd = serve(review, stopped)
     url = f"http://localhost:{httpd.server_address[1]}/"
-    print(f"Pass {pass_no}: {comments.path.relative_to(PACKAGE.parent)}\nReview page: {url}\n"
-          "Stop with the page's Stop button or Ctrl+C.")
+    print(
+        f"Pass {pass_no}: {comments.path.relative_to(PACKAGE.parent)}\nReview page: {url}\n"
+        "Stop with the page's Stop button or Ctrl+C."
+    )
     if not os.environ.get("REVIEW_NO_BROWSER"):
         webbrowser.open(url)
-    while not stopped.wait(1):     # save the comments every second
+    while not stopped.wait(1):  # save the comments every second
         with review.lock:
             review.save()
     with review.lock:
