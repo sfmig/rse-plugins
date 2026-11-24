@@ -132,7 +132,9 @@ function render() {
     li.innerHTML = `<i class="dot ${it.weight || ""}"></i><span class="num">${i + 1}</span>` +
                    `<span class="title ${atomic ? "mono" : ""}"></span><span class="count"></span>`;
     li.querySelector(".title").textContent = atomic ? it.sha.slice(0, 7) : it.title;
-    li.querySelector(".count").textContent = it.threads || "";
+    const count = li.querySelector(".count");
+    count.textContent = it.threads || "";
+    count.title = `${it.threads} open thread${it.threads === 1 ? "" : "s"}`;
     li.onclick = () => show(i);
     return li;
   }));
