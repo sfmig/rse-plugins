@@ -41,26 +41,26 @@ git log --reverse --oneline d005d99..smg/add-ellipse-params-to-tracks-atomic
 ```
 
 
-Risk rule: **high** = changes data written to the store; **med** = changes run behaviour; **low** = deps, tests, docs, logging.
+Weight rule: 🔴 **high** = changes data written to the store; 🟠 **med** = changes run behaviour; 🟢 **low** = deps, tests, docs, logging.
 
-| # | Commit | Purpose | Files | +/- | Risk |
+| # | Commit | Purpose | Files | +/- | Weight |
 |---|---|---|---|---|---|
-| 1 | `3b07d9c` | Add `scikit-image` dependency | `pyproject.toml` | +2/-1 | low |
-| 2 | `978488a` | OpenCV open/read timeouts 300 s | `crabs/utils/io.py` | +16/-1 | med |
-| 3 | `8a30314` | Rename `boxes_from_dataset` → `bbox_prompts` | module, test, import | +3/-7 | low |
-| 4 | `b8fe1a2` | Log peak memory with `/usr/bin/time -v` | `run_mask_array.sh` | +4/-1 | low |
-| 5 | `501a731` | Labels: 8-frame chunks, time last, zstd 15 | `mask_video.py`, `mask_config.yaml` | +49/-19 | high |
-| 6 | `038b04b` | Fail on short or unreadable clip videos | `mask_video.py` | +45/-0 | med |
-| 7 | `737101a` | Config defaults from yaml, unknown keys error, `mask_config` attr | `mask_video.py`, `run_mask_array.sh` | +54/-25 | med |
-| 8 | `cfdb81b` | Add `float_var_encoding` | `float_encoding.py` | +44/-0 | high |
-| 9 | `dc8fabd` | Add `copy_video_bboxes_to_masks` | `bbox_prompts.py` | +112/-0 | high |
-| 10 | `b13bcd0` | Add `mask_props` module | `mask_props.py` | +351/-0 | high |
-| 11 | `750c319` | Wire box copy, mask props, consolidation into `main` | `mask_video.py` | +24/-5 | high |
-| 12 | `3b0ce35` | Tests: `float_encoding` | `test_float_encoding.py` | +48/-0 | low |
-| 13 | `aecc455` | Tests: box copy, plus `confidence` fixture | `test_bbox_prompts.py`, `fixtures/trajectories.py` | +206/-1 | low |
-| 14 | `064a9a9` | Tests: `mask_props` | `test_mask_props.py` | +447/-0 | low |
-| 15 | `b493975` | Tests: `mask_video` | `test_mask_video.py` | +198/-22 | low |
-| 16 | `a70f978` | Docs: README and HPC guide | `README.md`, `MaskTrackedCrabsHPC.md` | +65/-12 | low |
+| 1 | `3b07d9c` | Add `scikit-image` dependency | `pyproject.toml` | +2/-1 | 🟢 low |
+| 2 | `978488a` | OpenCV open/read timeouts 300 s | `crabs/utils/io.py` | +16/-1 | 🟠 med |
+| 3 | `8a30314` | Rename `boxes_from_dataset` → `bbox_prompts` | module, test, import | +3/-7 | 🟢 low |
+| 4 | `b8fe1a2` | Log peak memory with `/usr/bin/time -v` | `run_mask_array.sh` | +4/-1 | 🟢 low |
+| 5 | `501a731` | Labels: 8-frame chunks, time last, zstd 15 | `mask_video.py`, `mask_config.yaml` | +49/-19 | 🔴 high |
+| 6 | `038b04b` | Fail on short or unreadable clip videos | `mask_video.py` | +45/-0 | 🟠 med |
+| 7 | `737101a` | Config defaults from yaml, unknown keys error, `mask_config` attr | `mask_video.py`, `run_mask_array.sh` | +54/-25 | 🟠 med |
+| 8 | `cfdb81b` | Add `float_var_encoding` | `float_encoding.py` | +44/-0 | 🔴 high |
+| 9 | `dc8fabd` | Add `copy_video_bboxes_to_masks` | `bbox_prompts.py` | +112/-0 | 🔴 high |
+| 10 | `b13bcd0` | Add `mask_props` module | `mask_props.py` | +351/-0 | 🔴 high |
+| 11 | `750c319` | Wire box copy, mask props, consolidation into `main` | `mask_video.py` | +24/-5 | 🔴 high |
+| 12 | `3b0ce35` | Tests: `float_encoding` | `test_float_encoding.py` | +48/-0 | 🟢 low |
+| 13 | `aecc455` | Tests: box copy, plus `confidence` fixture | `test_bbox_prompts.py`, `fixtures/trajectories.py` | +206/-1 | 🟢 low |
+| 14 | `064a9a9` | Tests: `mask_props` | `test_mask_props.py` | +447/-0 | 🟢 low |
+| 15 | `b493975` | Tests: `mask_video` | `test_mask_video.py` | +198/-22 | 🟢 low |
+| 16 | `a70f978` | Docs: README and HPC guide | `README.md`, `MaskTrackedCrabsHPC.md` | +65/-12 | 🟢 low |
 
 ## Limits
 
@@ -69,8 +69,3 @@ Risk rule: **high** = changes data written to the store; **med** = changes run b
 - Comments were not stripped. That would make the diff non-empty.
 - Built with `/private/tmp/claude-501/-Users-sofia-arc-project-Zoo-crabs-crabs-exploration/a9bea622-a385-4e05-b355-6934d0117455/scratchpad/build_stages.py`.
 
-## Delete when done
-
-```bash
-git branch -D smg/add-ellipse-params-to-tracks-atomic
-```

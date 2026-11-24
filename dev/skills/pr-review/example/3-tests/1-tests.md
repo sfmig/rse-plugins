@@ -1,12 +1,8 @@
 # 3.1 Tests as the spec
 
-## Review with difit, one test file per tab
+## Test files to review
 
-```bash
-pr-review/scripts/review.sh tests      # resume at row N: pr-review/scripts/review.sh tests N
-```
-
-Comments are saved to `pr-review/comments/tests-NN.json`. How saving works: `Review with difit`.
+To review these files in difit, add them as a row of the session table in `2-review/2-difit.md`, or use `pr-review/scripts/review.py all`.
 
 | # | Files | Lines | Done |
 |---|---|---|---|

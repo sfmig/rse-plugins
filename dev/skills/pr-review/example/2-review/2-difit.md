@@ -1,58 +1,86 @@
-# Review with difit
+# Review files with difit
 
-`difit` shows a GitHub-style diff in the browser, from local git. We provide a convenience script `review.sh` to use `difit` in the review of the atomic branch.
+[`difit`](https://yoshiko-pg.github.io/difit/) shows a GitHub-style diff in the browser, from local git. 
+
+We provide a script, `pr-review/scripts/review.py`, to review the PR using `difit`. It needs `difit` installed once: `npm i -g difit@5.0.12`.
+
+The script has three files, in `pr-review/scripts/`:
+
+| File | What it does |
+|---|---|
+| `review.py` | the command: branches, the list of items, `difit`, the review page's server |
+| `comments.py` | the comments file of a pass, and following a commit's lines to the tip |
+| `page.html` | the review page |
 
 
 ## Workflows
 
-There are four possible workflows to
-* Whole PR: `pr-review/scripts/review.sh all` opens the full diff (`d005d99` to the branch tip) in one tab, like GitHub's "Files changed".
-* Commit by commit: `pr-review/scripts/review.sh atomic` opens one tab per atomic commit. Closing the tab opens the next commit, so you never run `difit` by hand.
-* By session: `pr-review/scripts/review.sh sessions` opens one tab per session. The sessions come from the table in 2-difit.md, so you can regroup files by editing it.
-* By test files: `pr-review/scripts/review.sh tests` works the same way, one test file per tab.
+We support three possible workflows to review the files:
 
-> [!TIP]
-> * To resume from where you left off, add a number to the relevant command. E.g. `pr-review/scripts/review.sh atomic 5` will start from the 5th commit. 
-> * In atomic mode, you can pass a commit hash instead, e.g. `pr-review/scripts/review.sh atomic 501a731`. Note that a short hash made of only digits may be read as a position - in that case please provide a longer hash.
-> * You can check the number (or hash) of the item you last reviewed from the filenames in `pr-review/comments/`.
-> * If you've committed to the PR branch since the atomic branch was built, `atomic` mode warns you. Run `pr-review/scripts/extend-atomic.sh` to add the new commits to the end (see [1-atomic-branch.md](1-atomic-branch.md#keep-it-up-to-date)).
+* **Whole PR**: `pr-review/scripts/review.py all` shows the full diff between the PR branch and the commit where it split off from `main`, like GitHub's "Files changed".
+* **Commit by commit**: `pr-review/scripts/review.py atomic` shows one atomic commit at a time.
+* **By session**: `pr-review/scripts/review.py sessions` shows one session at a time. The sessions come from the table in [Session plan](#session-plan-table), so you can regroup files by editing the table directly.
 
-## Managing tabs
-* For each review item (i.e. a commit or a session), the `run_one` function in the `review.sh` script starts `difit` in the background. 
-* While the `difit` process is alive, it does nothing else except save your comments to `comments/<item>.json` every 2 s.
-* When you close the tab, `run_one` returns and the for-loop starts `difit` for the next item, which opens a new tab.
-* To stop the whole run, do `CTRL+C` in the terminal that ran the `review.sh` script.
+To start at a given item, add its number (or a commit hash in atomic mode):
 
-> [!NOTE]
-> Closing a tab or reloading it have the same effect! It signals that review item is complete, the comments are saved and the next item opens in a new tab.
+* E.g. `pr-review/scripts/review.py sessions 5` starts at the 5th row of the session table.
+* E.g. `pr-review/scripts/review.py atomic 501a731` starts at commit 501a731.
+    * A short hash made of only digits may be read as a position - in that case please provide a longer hash.
+
+The branches come from git: the PR branch is the one checked out, its atomic copy is `<branch>-atomic`, and `main` is origin's default branch. Set `BRANCH=...` or `MAIN=...` to override.
 
 
-## Comments: where they are saved
+## The review page
 
-| Where | When | Source |
-|---|---|---|
-| Browser localStorage | always, per diff | difit README "Persistent Storage" |
-| difit server memory | while the tab is open | `difit comment get --port <port> --format json` |
-| `pr-review/comments/<item>.json` | every 2 s, by `review.sh` | polls `/api/comments-json` |
-| `pr-review/comments/<item>.log` | when the tab closes | difit prints all comments on exit |
+`review.py` opens one review page in the browser:
 
-- Without `review.sh`, comments live only in the browser.
-- `comments/*.json` is what the AI agent reads later.
-- Option B diffs come from stdin. They share one browser key, so `review.sh` starts each with `--clean`, then reloads that session's saved notes.
-- Reloading the page ends the difit server; closing the tab is the signal to move on.
+* The sidebar lists the items (commits or sessions) with the number of open threads. Items you have opened are greyed out. In commit-by-commit mode, the commits are listed by short hash, with their weight colour (🔴 high, 🟠 med, 🟢 low).
+* The bar above the diff has **Prev** / **Next** buttons (or <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>Alt</kbd>+<kbd>↓</kbd>). In commit-by-commit mode it also shows the commit's subject line (hover it for the full message).
+* The **«** button (or <kbd>Alt</kbd>+<kbd>B</kbd>) hides or shows the sidebar, for more room for the diff. The page remembers the choice.
+* One `difit` server shows the chosen item. Choosing another item saves the comments and starts a new server (about half a second).
+* Closing or reloading the page does not stop the review: reopen it at the address printed in the terminal.
+* To stop, use the page's **Stop review** button or `CTRL+C` in the terminal. The comments are saved first.
 
-## In the tab
 
-| Action | How |
-|---|---|
-| Mark file viewed | checkbox on the file header |
-| Add a note | click a line number, or drag over a range |
-| Reply to a preloaded question | reply in its thread |
-| Show only changed lines (option A) | `DIFIT_EXTRA="--context 0" pr-review/scripts/review.sh atomic` |
+## Passes
 
-## Session plan (option B)
+Each run starts a new **pass**, saved to `pr-review/comments/pass-N/comments.json`. To add to an earlier pass instead, use `--pass N`, e.g. `pr-review/scripts/review.py atomic 7 --pass 2`.
 
-Lines = added + removed (`git diff --numstat d005d99 smg/add-ellipse-params-to-tracks`). `review.sh` reads the files from this table; edit it to regroup.
+* The AI-suggested questions ([Preloaded questions](#preloaded-questions)) are added to each new pass, except the ones an earlier pass resolved or deleted.
+* Pass 0 is the first review of this PR, converted from `comments/atomic_pass0.json`.
+
+
+## Comments
+
+`review.py` saves the comments once a second. As on GitHub, comments only move forward, to newer code:
+
+* A comment written on an atomic commit stays on that commit. It also shows in whole-PR and session modes, at its line at the tip of the branch (found with `git blame`).
+* If a later commit changed the line, the comment is **outdated**: it shows only on its commit, and in whole-PR and session modes it is listed in the sidebar.
+* A comment written in whole-PR or session mode stays at the tip. In commit-by-commit mode it is listed in the sidebar.
+* The preloaded questions go on the commit that added their line.
+* Resolving a thread in `difit` moves it to the `resolved` list. Resolved threads are not loaded again.
+* To delete a thread (e.g. one added by mistake), reply `delete` (or edit its first message to `delete`). It moves to the `deleted` list, but stays visible until you open another item. To undo, delete the `delete` reply before that.
+* "Delete all comments" in `difit`'s menu counts as resolving every thread, so they all go to `resolved`.
+* The "viewed" checkboxes are not kept after reopening.
+* Stop the review before editing `comments.json` by hand (or before asking an agent to). Otherwise the next save can overwrite your edits.
+
+
+## When the atomic branch is behind
+
+If commits were added to the PR branch after the atomic branch was built, `review.py` says so. Until the atomic branch is updated, comments written on a commit are not shown at the tip, and the preloaded questions are not placed on commits.
+
+To add the new commits of the PR branch to the end of the atomic branch, run:
+
+```bash
+pr-review/scripts/review.py extend
+```
+
+It looks for the commit on the PR branch that has the same files as the atomic tip. If the PR branch was rebased or amended, there is no such commit, so it stops and asks for a rebuild of the atomic branch instead.
+
+
+## Session plan table
+
+When reviewing **by session**, `review.py` reads the files from this table. You can edit it to regroup the files.
 
 | Session | Files | Lines | Done |
 |---|---|---|---|
@@ -62,16 +90,10 @@ Lines = added + removed (`git diff --numstat d005d99 smg/add-ellipse-params-to-t
 | 4 | `crabs/mask/mask_props.py` | 351 | [ ] |
 | 5 | `bash_scripts/run_mask_array.sh`, `guides/MaskTrackedCrabsHPC.md`, `pyproject.toml` | 51 | [ ] |
 
-Before session 1: read block 1.
 
 ## Preloaded questions
 
-Source: `pr-review/2-review/questions.json`. Commit = atomic commit that adds the line (`git blame` on the atomic branch).
-
-
-
-* Preloaded questions: each question only appears on the commit that added its line, found with git blame.
-
+Below are some AI-suggested questions. Each question only appears on the commit that added its line (found with git blame).
 
 | # | Question | Where | Commit | Session |
 |---|---|---|---|---|
@@ -88,20 +110,17 @@ Source: `pr-review/2-review/questions.json`. Commit = atomic commit that adds th
 
 ## After the review
 
-Next: `AI-specific red flags`. Then ask the agent: "read `pr-review/comments/*.json` and answer my notes".
+You can optionally review the section on AI-specific red flags before finalising the review. 
+
+When done, ask the agent to read the comments under `pr-review/comments/` and address the comments and/or questions.
+
+Prompt: Have a look at the comments from the PR review here. Answer the questions briefly, clarify ambiguous things and for suggested changes determine whether to accept them or not. can you add your comments to the json as replies to a thread?
 
 
-## Keep it up to date
+Then I resolved any open questions or conflicts. Then I asked the agent to 
 
-In the next step, `pr-review/scripts/review.sh atomic` warns when the atomic branch no longer matches the original branch.
+You can optionally delete the atomic branch when done too:  have a look at the comments in /pr-review/comments/pass-N/comments.json and implement anything that is resolved in smg/add-ellipse-params-to-tracks with atomic commits
 
-To add new commits from the original branch to the tip of the atomic branch, run:
 ```bash
-pr-review/scripts/extend-atomic.sh
+git branch -D smg/add-ellipse-params-to-tracks-atomic
 ```
-
-- Adds each commit made on the original branch after the matching one to the end of the atomic branch, as items 17, 18, …. Same message, author and date.
-- Finds the matching commit by itself: the commit on the original branch with the same files as the atomic tip.
-- Doesn't touch your working tree. Earlier commits, their numbers and their saved comments stay as they are.
-- New commits go at the end, out of the plumbing → docs order. After a big change, ask the agent for a full rebuild.
-- If the original branch was rebased or amended, no commit has the same files as the atomic tip. It stops and asks for a rebuild.

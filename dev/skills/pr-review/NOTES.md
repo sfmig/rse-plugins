@@ -40,9 +40,9 @@ Revised after feedback (2026-11-20). First draft had 14 flat files; the user cut
 | | `questions.json` | Skeptical questions as difit comments |
 | | `3-red-flags.md` | AI-specific checks, read last |
 | 3. Tests | `1-tests.md` | Test plan table for difit; behaviours tested and not tested |
-| `scripts/` | `review.sh` | Runs difit one item per tab, saves comments to `comments/`; read-only on git |
-| | `extend-atomic.sh` | Adds the PR branch's new commits to the end of the atomic branch |
-| | `config.sh` | Branch names worked out from git; helpers shared by both scripts |
+| `scripts/` | `review.py` | Review page + difit, saves comments to `comments/pass-N/`; `review.py extend` adds the PR branch's new commits to the atomic branch |
+| | `comments.py` | Comments file of a pass; follows commit lines to the tip with `git blame` |
+| | `page.html` | The review page |
 
 Order inside block 1 goes from general to detailed: aim and components → flow → signatures → optional predict.
 
@@ -71,6 +71,7 @@ Order inside block 1 goes from general to detailed: aim and components → flow 
 ## User feedback
 
 Add new feedback here when the user asks. Newest last.
+Rows 12–14 and 22–29 describe the first, bash difit runner; it was replaced on 2026-11-24 (rows 30–43).
 
 | # | Feedback | Applied as |
 |---|---|---|
@@ -103,6 +104,20 @@ Add new feedback here when the user asks. Newest last.
 | 27 | A script that changes branches should be separate from the review runner | `scripts/`: `review.sh` (read-only), `extend-atomic.sh`, shared `config.sh` |
 | 28 | Names must say what the code does | "built from" read as "branched off" → "the commit whose files match the atomic tip"; `refresh` read as "rebuild" → `extend-atomic.sh`; function `last_commit_matching_atomic` |
 | 29 | Code comments: short; what it does, plus why for the non-obvious part | User cut a 10-line comment to 3 lines: what it prints, the empty case, why awk reads to the end |
+| 30 | Leave the tests out of the difit runner for now | `tests` mode removed; `3-tests/` block kept, it points to `review.py all` or a session row |
+| 31 | Opening each tab took ~4 s | Causes: npx asked the npm registry on every launch; the script noticed a closed tab only every 2 s. Now difit is installed once (`npm i -g difit@5.0.12`) and an item opens in ~0.1–0.5 s |
+| 32 | Easier to move between commits; commit message as the tab name | One **review page**: sidebar of items, the chosen one in difit in an iframe, Prev/Next (Alt+↑/↓). Browser tab title = item title. A tabs mode (close tab = next) was kept for a trial, then dropped |
+| 33 | Rename "Risk" to "Weight" and colour high/med/low | Column `Weight` with 🔴 🟠 🟢 in `1-atomic-branch.md`; same colours as dots in the sidebar; legend only in atomic mode |
+| 34 | Comments independent of the review mode | One comments file per pass. Each thread has `commit` (sha, file, position) and `tip` (file, position). As on GitHub, comments only move forward: written on a commit → tip line found by `git blame` each run; written on the whole PR → stays at the tip. Tip→commit mapping was built, then dropped for simplicity |
+| 35 | Outdated comments: do as GitHub | GitHub hides them in "Files changed" and lists them in "Conversation" with an Outdated label. Here: inline only on their commit; listed in the sidebar elsewhere. No "open its commit" button (GitHub has none) and no old code line |
+| 36 | One comments file per pass; a reviewer may do several passes | `comments/pass-N/comments.json`. Each run = new pass; `--pass N` adds to pass N; old passes stay loadable. Questions are re-added to a new pass unless an earlier pass resolved or deleted them. Tried and dropped: `--continue`, lazy pass creation (only on first comment) |
+| 37 | "Delete all comments" should delete | Not possible: difit's API shows resolve and delete-all the same way (threads gone). Kept as resolve. A reply `delete` moves the thread to a `deleted` list (recoverable), not dropped |
+| 38 | Logs under each pass | Done, then dropped with the move to one difit server: the port is chosen by the script (`--port`), so no log is needed |
+| 39 | Minimal top bar | Only the buttons: « (hide sidebar), Prev, Next, Stop. Atomic mode adds the commit subject (hover = full message); sidebar shows only the short hash. No subtitle under the heading |
+| 40 | Collapsible sidebar | « / » button and Alt+B; choice kept in localStorage |
+| 41 | Keep the plumbing simple and minimal; drop features if needed | Dropped: bash wrapper, npx lookup, logs, lock file and `stop`, pool of difit servers and prefetch, tabs mode, `--continue`, lazy passes, rename following, tip→commit mapping |
+| 42 | Readable by a human and modular; HTML separate | 3 files in `scripts/`: `review.py` (command, branches, items, difit, page server), `comments.py` (no difit or HTTP: pass file, saving, commit→tip), `page.html` (plain HTML/CSS/JS, data from `/api/state`). Kept under `scripts/`, not a new `review/` folder. `extend-atomic.sh` became `review.py extend`: one command, against row 27; the review modes still never change branches |
+| 43 | Scripts independent of the PR to review | Branches from git (checked-out branch, `<branch>-atomic`, origin's default branch; `BRANCH`/`MAIN` override). Inputs only from the package's files: session table, commits table, `questions.json` |
 
 ## Quarto support (to add to the skill)
 
@@ -142,34 +157,50 @@ Gotchas:
 
 ## difit runner (`scripts/`)
 
-Facts checked in difit 5.0.12 source and by a live run:
+Rewritten 2026-11-24 (feedback 30–43). Example: `example/scripts/`, about 800 lines in 3 files.
 
-- Comments live in browser localStorage, per diff. Also POSTed to the server (`/api/comments`).
-- `GET /api/comments-json` returns the open diff's threads. `difit comment get --port N --format json` wraps it.
-- On Ctrl+C or tab close, difit prints all comments as text, then exits.
-- Closing (or reloading) the tab ends the server, unless `--keep-alive`.
-- The revision selector lists only the last 20 commits of the checked-out branch.
-- Stdin diffs (`git diff ... | difit -`) all share one browser storage key.
+```
+review.py atomic [N|SHA] [--pass N]   one atomic commit at a time
+review.py sessions [N]   [--pass N]   rows of the session table
+review.py all            [--pass N]   base..branch, like "Files changed"
+review.py extend                      add the PR branch's new commits to the atomic branch
+```
 
-How `review.sh` uses them:
+How it works:
 
 | Need | How |
 |---|---|
-| One commit per tab, no manual runs | loop over `git rev-list --reverse base..atomic`; wait for difit to exit |
-| File groups per tab | `git diff -M base branch -- files \| difit - --clean` |
-| Save as you go | poll `/api/comments-json` every 2 s into `comments/<item>.json` |
-| Do not lose saved comments | overwrite only after a change; stdin items re-import saved comments via `--comment` |
-| Preload questions on the right commit | `git blame` the question's line on the atomic branch |
-| Item lists editable by the reviewer | parse markdown table rows that end in `[ ]` / `[x]` |
-| Testing without a browser | `DIFIT_EXTRA="--no-open"`, add comments with `difit comment add` |
-| Testing without difit | `DIFIT=echo`: the log shows the exact difit arguments |
-| Whole PR in one tab | `difit $BRANCH $BASE --clean`, saved notes re-imported, so a rerun doesn't duplicate them |
-| Resume by position or hash | `review.sh atomic N` or `<sha>`; hash → position with `rev-list \| grep -nx` |
-| Warn when the atomic branch is stale | `git diff --quiet atomic branch`; y/N prompt only in a terminal |
-| Works for any PR | `BRANCH` = checked-out branch (drop `-atomic` only if that branch exists), `BASE` = `merge-base main`, `ATOMIC` = `$BRANCH-atomic` |
-| Test branch-changing scripts safely | `ATOMIC=tmp-copy` on a throwaway copy of the atomic branch |
+| Move between items easily | A review page (`page.html`) served by `review.py` on a free local port: sidebar of items, the chosen item's difit in an iframe |
+| Low memory | One difit server at a time (~65 MB each); choosing another item saves, stops it, starts the next (~0.5 s) |
+| Know difit's port without logs | Script picks a free port and passes `--port` (difit tries port+1 only if it is taken) |
+| Comments as the only record | difit starts `--clean`, then gets the item's saved threads with `--comment` (ids kept, so saving matches by id) |
+| Save as you go | Every 1 s: `GET /api/comments-json`; compare with the last look (ids and bodies only, difit adds other fields); write only changes |
+| Resolve / delete | Thread gone from difit → `resolved`; a reply `delete` → `deleted` |
+| Comments in every mode | `commit` place for threads written on a commit; `tip` place found each run with `git blame base..rev`: a line is named by (commit that last changed it, line there), same name in every revision |
+| Outdated | No tip line → shown inline only on the commit; listed in the sidebar in tip modes |
+| Questions on the right commit | `git blame` the tip line on the atomic branch → (commit, line there) |
+| Atomic branch behind the PR branch | Tip mapping off for the run, one note printed, suggests `review.py extend` |
+| Session diffs | `git diff -M base branch -- files` on stdin (`difit -`) |
+| Testing without a browser | `REVIEW_NO_BROWSER=1`; act as the reviewer with `POST /api/comments` on difit; a copy of `pr-review/` keeps real comments safe |
 
-UNSURE: whether imported questions duplicate when the browser also restores them from localStorage (README says duplicates are skipped).
+Facts checked in difit 5.0.12 source:
+
+- `GET /api/comments-json` returns the threads; `POST /api/comments` replaces them (the page uses it).
+- `--comment` imports accept `id`, `createdAt`, `updatedAt`, `author`; replies attach by file and position.
+- Closing the tab ends the server 100 ms later, unless `--keep-alive`.
+- The server keeps comments per (base, target) and has an in-page revision picker, but the page does not read base/target from its URL and lists any commits, without our titles: not used.
+- The page never sets `document.title`, and nothing stops it being framed: so the wrapper page sets the tab title.
+- "Delete all comments" and resolve look the same through the API (threads gone).
+- `npx -y difit@X` contacts the npm registry on every start, even when cached (~2–4 s).
+
+Gotchas from this round:
+
+- Python buffers stdout when it is not a terminal: `sys.stdout.reconfigure(line_buffering=True)`.
+- A CSS `display: flex` overrides the `hidden` attribute: add `[hidden] { display: none !important; }`.
+- A blame header line must be matched strictly (`^[0-9a-f]{40} \d+ \d+`): a long commit summary can look like one.
+- When a run stops, stop the difit on screen too, or it is left running.
+
+UNSURE: replies of two threads on the same line may attach to the wrong thread on import.
 
 ## Deterministic or LLM?
 
@@ -184,9 +215,10 @@ UNSURE: whether imported questions duplicate when the browser also restores them
 | Mermaid valid | `mmdc`, or `check-mermaid.sh` | idea |
 | Atomic branch mechanics | temp index + `commit-tree`; final-tree equality check | used |
 | Atomic branch grouping | none; needs judgment | LLM |
-| Atomic branch update | tree-hash match + `commit-tree` per new commit (`extend-atomic.sh`) | used |
+| Atomic branch update | tree-hash match + `commit-tree` per new commit (`review.py extend`) | used |
 | Question → commit | `git blame` on atomic branch | used |
-| difit runs and saving | `review.sh` | used |
+| difit runs and saving | `review.py` | used |
+| Comment place, commit → tip | `git blame base..rev` line names | used |
 | Tests added/removed | `pytest --collect-only -q` at base vs tip, diff the lists | idea |
 | Changed lines not tested | `pytest --cov` + `diff-cover` | idea; replaces the grep-based "not tested" table |
 | CI and skip/xfail changes | `git diff -- .github`; grep `skip\|xfail` in test diff | used |
@@ -208,4 +240,4 @@ UNSURE: whether imported questions duplicate when the browser also restores them
 - Optional step: strip comments on the scratch branch (makes the final diff non-empty).
 - Signatures view as two panes: flowchart fixed on the left, hover a box to show its diff on the right (custom JS in Quarto).
 - Save the atomic grouping (which original change went to which commit), so a full rebuild after a big PR change can reuse it. The trial's `build_stages.py` was one-off string replacements in a session scratchpad.
-- Merge all `comments/*.json` into one prompt for the agent at the end of block 2.
+- Give the agent one prompt per pass: `comments/pass-N/comments.json` (open threads with their tip lines) at the end of block 2.

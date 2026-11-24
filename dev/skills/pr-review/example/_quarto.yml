@@ -15,5 +15,6 @@ format:
     toc: false
     css: styles.css
     filters:
+      - gh-alerts.lua
       - mermaid.lua
     include-after-body: mermaid.html
