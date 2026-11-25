@@ -38,6 +38,8 @@ By default none of them shows the test files, that is:
 
 To **include the test files**, add `--with-tests`, e.g. `pr-review-minimal/scripts/review.py all --with-tests`. Comments written on them stay in the code review. In session mode, only test files listed in the *Session plan table* are shown.
 
+To **leave out the AI-suggested questions**, add `--no-questions`, e.g. `pr-review-minimal/scripts/review.py atomic --no-questions`. By default they are added to each new pass as open threads (from `2-review/questions-code.json`). Questions already in a pass you reopen with `--pass N` stay.
+
 
 <details>
 <summary><b>Review page</b></summary>

@@ -1,18 +1,28 @@
 # Review tests with difit
 
-Same review page and comment rules as in *Review code with difit*.
+This is the second part of the review: the test files, next to the code they test. The review page and the comment rules are the same as in the code review (tab *Review code with difit*).
 
-## Review steps
 
-To show one step at a time, run:
+## Quickstart
+
+Install [`difit`](https://yoshiko-pg.github.io/difit/) if you haven't yet (see *Review code with difit*). Then, run the **helper script**:
 
 ```bash
 pr-review-minimal/scripts/review.py tests
 ```
 
-* Each changed test has a 🔗 comment on its `def` line that jumps to the functions it calls, and each of those functions links back to its tests. These links are not saved.
+## Workflow
+
+`review.py tests` shows one row of the *Review steps table* below at a time: a behaviour, with its tests and the code they test.
+
+Each changed test has a 🔗 comment on its `def` line that jumps to the functions it calls, and each of those functions links back to its tests. 
 
 `review.py` reads the files from the *Files* column. Edit the table to regroup the tests. If a changed test file is in no step, `review.py` prints it.
+
+To **leave out the AI-suggested questions** (*Tests questions* below), add `--no-questions`: `pr-review-minimal/scripts/review.py tests --no-questions`.
+
+<details open>
+<summary><b>Review steps table</b></summary>
 
 | Step | Behaviour | Files | Done |
 |---|---|---|---|
@@ -20,6 +30,8 @@ pr-review-minimal/scripts/review.py tests
 | 2 | Boxes: from a trajectories clip, and copied into a masks store | `crabs/mask/utils/bbox_prompts.py`, `crabs/mask/utils/boxes_from_dataset.py`, `tests/test_unit/test_bbox_prompts.py`, `tests/test_unit/test_boxes_from_dataset.py`, `tests/fixtures/trajectories.py` | [ ] |
 | 3 | Measuring masks and writing the 8 variables | `crabs/mask/mask_props.py`, `tests/test_unit/test_mask_props.py` | [ ] |
 | 4 | Labels layout and `main`: end to end, config, errors, metadata | `crabs/mask/mask_video.py`, `crabs/mask/config/mask_config.yaml`, `tests/test_unit/test_mask_video.py` | [ ] |
+
+</details>
 
 <details>
 <summary><b>Tests passes</b></summary>
