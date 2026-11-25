@@ -1,18 +1,13 @@
 # Aim and diagrams
 
-* [Aim](#aim)
-* [Components before and after](#components-before-and-after)
-* [Flow diagram](#flow-diagram)
-
 ## Aim
-[↑ Back to top](#top)
 
 **Before this PR**: the masks store from `mask-tracked-crabs` held only the mask labels. Also: cluster runs needed a config file, wrote one frame per chunk, ignored unknown config keys, and copied the config YAML next to the store.
 
 **With this PR**: the masks store now also holds the bounding boxes used as prompts, and 8 shape parameters (from the ellipse fitted to each mask) for every frame. These use the same `(clip_id, time, individual)` dimensions as the trajectories store. Cluster runs also use less disk space, stop with an error on bad video inputs, and save their config inside the store (`attrs.mask_config`).
 
-## Components before and after
-[↑ Back to top](#top)
+<details>
+<summary><b>Components before and after</b></summary>
 
 Green = new or changed. Grey = unchanged. Each box names a real file or function.
 
@@ -57,8 +52,10 @@ flowchart LR
     class SH,LC,CL,EX,CS,CB,W,MP,CON,OV,FE,ST new
 ```
 
-## Flow diagram
-[↑ Back to top](#top)
+</details>
+
+<details>
+<summary><b>Flow diagram</b></summary>
 
 * `mv` = `crabs/mask/mask_video.py`
 * `bp` = `crabs/mask/utils/bbox_prompts.py`
@@ -142,3 +139,4 @@ flowchart TD
 
 </details>
 
+</details>

@@ -2,14 +2,7 @@
 
 The second part of the review: the test files, each step with the code it tests. Same review page and comment rules as in *Review code with difit*.
 
-* [Review steps](#review-steps)
-* [Tests passes](#tests-passes)
-* [Tests questions](#tests-questions)
-* [Not tested](#not-tested-by-grep-of-tests)
-* [Bug-fix commits](#bug-fix-commits-is-there-a-test-that-fails-before-the-fix)
-
 ## Review steps
-[↑ Back to top](#top)
 
 To show one step at a time, run:
 
@@ -30,15 +23,17 @@ pr-review-minimal/scripts/review.py tests
 | 3 | Measuring masks and writing the 8 variables | `crabs/mask/mask_props.py`, `tests/test_unit/test_mask_props.py` | [ ] |
 | 4 | Labels layout and `main`: end to end, config, errors, metadata | `crabs/mask/mask_video.py`, `crabs/mask/config/mask_config.yaml`, `tests/test_unit/test_mask_video.py` | [ ] |
 
-## Tests passes
-[↑ Back to top](#top)
+<details>
+<summary><b>Tests passes</b></summary>
 
-* Each run starts a new **pass** of the tests review, saved to `pr-review-minimal/comments/tests/pass-N/comments.json`. Add to an earlier pass with `--pass N`. Leave out the [preloaded questions](#tests-questions) with `--no-questions`.
+* Each run starts a new **pass** of the tests review, saved to `pr-review-minimal/comments/tests/pass-N/comments.json`. Add to an earlier pass with `--pass N`. Leave out the preloaded questions (*Tests questions* below) with `--no-questions`.
 * Comments here stay in the tests review, also those written on a source file of a step. They do not show in the code review.
 * The prompts in *Review code with difit* → *After the review* work here too, with `comments/tests/`.
 
-## Tests questions
-[↑ Back to top](#top)
+</details>
+
+<details>
+<summary><b>Tests questions</b></summary>
 
 AI-suggested questions, from `2-review/questions-tests.json`.
 
@@ -47,8 +42,10 @@ AI-suggested questions, from `2-review/questions-tests.json`.
 | T1 | Does this overwrite check fail before the fix in `bcefddd`? UNSURE | `tests/test_unit/test_mask_props.py:392` | 3 |
 | T2 | No test reaches this `RuntimeError` (early frame read failure). Add one? | `crabs/mask/mask_video.py:384` | 4 |
 
-## Not tested (by grep of `tests/`)
-[↑ Back to top](#top)
+</details>
+
+<details>
+<summary><b>Not tested (by grep of <code>tests/</code>)</b></summary>
 
 Lines as of `1b9c04f`.
 
@@ -60,10 +57,14 @@ Lines as of `1b9c04f`.
 | Rerun after crash mid `add_mask_props_to_group` | `crabs/mask/mask_props.py:259-262` |
 | Bash script changes | `bash_scripts/run_mask_array.sh:149-166` |
 
-## Bug-fix commits: is there a test that fails before the fix?
-[↑ Back to top](#top)
+</details>
+
+<details>
+<summary><b>Bug-fix commits: is there a test that fails before the fix?</b></summary>
 
 | Fix | Fail-before test |
 |---|---|
 | `bcefddd` overwrite fix | `tests/test_unit/test_mask_props.py:392` (UNSURE fails before) |
 | `62e8853` early read error | none found |
+
+</details>

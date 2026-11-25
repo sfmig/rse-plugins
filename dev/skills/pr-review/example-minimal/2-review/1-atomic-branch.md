@@ -16,12 +16,13 @@
 
 </details>
 
-## Scratch branch: atomic
+<details>
+<summary><b>Scratch branch: atomic</b></summary>
 
 * Local branch `smg/add-ellipse-params-to-tracks-atomic`. 
 * Not pushed. 
 * Zero diff with the original branch up to `1b9c04f`, the commit whose files match the atomic tip.
-* New commits on the original branch make the atomic branch stale: see [Extending the atomic branch](#extend-atomic-branch).
+* New commits on the original branch make the atomic branch stale: see *Extending the atomic branch* below.
 
 <details>
 <summary>Check zero diff</summary>
@@ -33,8 +34,10 @@ git diff smg/add-ellipse-params-to-tracks smg/add-ellipse-params-to-tracks-atomi
 
 </details>
 
+</details>
 
-## List of commits
+<details>
+<summary><b>List of commits</b></summary>
 To list the atomic commits, oldest first
 ```bash
 git log --reverse --oneline d005d99..smg/add-ellipse-params-to-tracks-atomic
@@ -61,7 +64,10 @@ git log --reverse --oneline d005d99..smg/add-ellipse-params-to-tracks-atomic
 
 Commits with only test files (12–15 here) are left out of the code review (tab *Review code with difit*); their files are in the tests review (tab *Review tests with difit*). A commit with both shows only its code files in the code review.
 
-## Extending the atomic branch
+</details>
+
+<details>
+<summary><b>Extending the atomic branch</b></summary>
 
 If commits are added to the PR branch after the atomic branch was built, add them to the end of the atomic branch with:
 
@@ -71,11 +77,14 @@ pr-review-minimal/scripts/atomic.py extend
 
 It looks for the commit on the PR branch that has the same files as the atomic tip, and replays the commits after it. If the PR branch was rebased or amended, there is no matching commit, in that case it stops and you can ask the agent to rebuild the atomic branch instead.
 
+</details>
 
-## Limits
+<details>
+<summary><b>Limits</b></summary>
 
 - Only the final tree is checked equal. Middle commits were not run.
 - Tests come after code, so commits 5–11 may fail old tests.
 - Comments were not stripped. That would make the diff non-empty.
 - Built with `/private/tmp/claude-501/-Users-sofia-arc-project-Zoo-crabs-crabs-exploration/a9bea622-a385-4e05-b355-6934d0117455/scratchpad/build_stages.py`.
 
+</details>

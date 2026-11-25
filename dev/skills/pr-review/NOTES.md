@@ -154,6 +154,7 @@ Rows 12–14 and 22–29 describe the first, bash difit runner; it was replaced 
 | 60 | Keep difit's own "Open in editor" (lost when the test files were filtered out with a diff on stdin) | difit's git mode has no path filter, so `review.py` makes a commit object with the base's files plus only the item's files (temporary index, `commit-tree`; no ref changed) and passes `<commit> <base>`. Used for sessions, the whole PR and atomic commits with test files; checked: same diff as `git diff -- files` for all 41 items, refs unchanged. Tests mode stays on stdin: its link ids come from the `--function-context` diff it sends |
 | 61 | (found while building 58) Preloaded questions go stale as the PR moves on | Re-anchored each question at the tip, checked with `sed -n`; dropped those that later commits settled (5 of 10) |
 | 62 | Flags to include the tests in the code review, and to leave out the preloaded questions | `--with-tests` (code modes only; tests-only commits come back in atomic mode; comments stay in `comments/code/`; sessions show only test files listed in the table) and `--no-questions` (both reviews; questions already in a reopened pass stay). `tests --with-tests` exits with an error |
+| 63 | No list of section links at the top of a file; show the sections below the first one collapsed | Minimal layout: each file's first `##` section stays open, each later one is a `<details>` with a bold `<summary>` (no `##` heading, no back-to-top link; replaces rows 19–20 there). Links to a section became its name in italics, as a link cannot open a closed `<details>`. `mermaid.html` also draws on `toggle` (captured, as it does not bubble): diagrams in a closed `<details>` come out blank otherwise. `review.py` still reads the tables inside them |
 
 ## Quarto support (to add to the skill)
 
@@ -181,7 +182,7 @@ Rules this needs from the other output files:
 Gotchas:
 
 - Without `render: [index.qmd]`, Quarto renders every `.md` to a stray `.html` next to it.
-- Mermaid in a hidden tab draws blank; draw on `shown.bs.tab`.
+- Mermaid in a hidden tab draws blank; draw on `shown.bs.tab`. Same in a closed `<details>`: also draw on `toggle`, listened with capture.
 - `securityLevel: "loose"` is needed for `click` links in diagrams.
 - `quarto render` fails in the sandbox ("unable to open database file"): it writes `~/Library/Caches/quarto`. Run outside the sandbox.
 - Quarto marks diff `+` lines `span.va` and `-` lines `span.st`; colour the parent line span with `:has()`. Use `inline-block; width:100%`, not `block` (doubles line spacing).

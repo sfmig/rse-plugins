@@ -13,7 +13,6 @@ npm i -g difit@5.0.12
 ```
 
 ## Workflows
-[↑ Back to top](#top)
 
 Three ways to go through the code. By default none of them shows the test files: a file in a `tests/` folder, or named `test_*.py`, `*_test.py` or `conftest.py`.
 
@@ -21,17 +20,17 @@ Three ways to go through the code. By default none of them shows the test files:
 |---|---|---|
 | Whole PR | `pr-review-minimal/scripts/review.py all` | The PR's diff from where it split off `main`, like GitHub's "Files changed" |
 | Commit by commit | `pr-review-minimal/scripts/review.py atomic` | One atomic commit at a time. Commits with only tests are skipped |
-| By session | `pr-review-minimal/scripts/review.py sessions` | One row of the [Session plan table](#session-plan-table) at a time |
+| By session | `pr-review-minimal/scripts/review.py sessions` | One row of the *Session plan table* below at a time |
 
 To **resume** from an item, add its number from the tables, or a commit hash in atomic mode:
 
 * `pr-review-minimal/scripts/review.py sessions 3` starts at session 3.
 * `pr-review-minimal/scripts/review.py atomic 501a731` starts at that commit. A short hash of only digits is read as a number: give a longer hash.
 
-To **include the test files**, add `--with-tests`, e.g. `pr-review-minimal/scripts/review.py all --with-tests`. Comments written on them stay in the code review. In session mode, only test files listed in the [Session plan table](#session-plan-table) are shown.
+To **include the test files**, add `--with-tests`, e.g. `pr-review-minimal/scripts/review.py all --with-tests`. Comments written on them stay in the code review. In session mode, only test files listed in the *Session plan table* are shown.
 
-## Review page
-[↑ Back to top](#top)
+<details>
+<summary><b>Review page</b></summary>
 
 `review.py` opens one page in the browser:
 
@@ -39,8 +38,10 @@ To **include the test files**, add `--with-tests`, e.g. `pr-review-minimal/scrip
 * **✎ Open in editor** in the sidebar lists the files of the item on screen. Click one to open it in your editor.
 * **Stop review** button, or <kbd>Ctrl</kbd>+<kbd>C</kbd> in the terminal, to stop.
 
-## Comments
-[↑ Back to top](#top)
+</details>
+
+<details>
+<summary><b>Comments</b></summary>
 
 `review.py` saves the comments once a second. As on GitHub, comments only move forward, to newer code:
 
@@ -51,16 +52,20 @@ To **include the test files**, add `--with-tests`, e.g. `pr-review-minimal/scrip
 * The "viewed" checkboxes are not kept.
 * Stop the review before editing `comments.json` by hand (or before asking an agent to). Otherwise an automatic save can overwrite your edits.
 
-## Review passes
-[↑ Back to top](#top)
+</details>
+
+<details>
+<summary><b>Review passes</b></summary>
 
 * Each run starts a new **pass** of the code review, saved to `pr-review-minimal/comments/code/pass-N/comments.json`.
 * To add comments to an earlier pass, use `--pass N`, e.g. `pr-review-minimal/scripts/review.py atomic 7 --pass 2`.
-* The [Preloaded questions](#preloaded-questions) are added to each new pass, except the ones an earlier pass resolved or deleted. To leave them out, add `--no-questions`. Questions already in a pass you reopen with `--pass N` stay.
+* The preloaded questions (`2-review/questions-code.json`) are added to each new pass, except the ones an earlier pass resolved or deleted. To leave them out, add `--no-questions`. Questions already in a pass you reopen with `--pass N` stay.
 * The tests review has its own passes, in `comments/tests/`.
 
-## After the review
-[↑ Back to top](#top)
+</details>
+
+<details>
+<summary><b>After the review</b></summary>
 
 Ask the agent to answer the open threads in the JSON file. Example prompt:
 
@@ -72,8 +77,10 @@ Reload the pass in `difit` (`--pass N`) to read the answers, settle open threads
 
 If commits are added to the PR branch after the atomic branch was built, `review.py` says so. Until the atomic branch is extended (tab *Atomic branch*), comments written on a commit are not shown at the tip, and the preloaded questions are not placed on commits.
 
-## Session plan table
-[↑ Back to top](#top)
+</details>
+
+<details>
+<summary><b>Session plan table</b></summary>
 
 When reviewing **by session**, `review.py` reads the files from this table. Edit it to regroup the files. Test files in it are shown only with `--with-tests`.
 
@@ -85,3 +92,4 @@ When reviewing **by session**, `review.py` reads the files from this table. Edit
 | 4 | `crabs/mask/mask_props.py` | 351 | [ ] |
 | 5 | `bash_scripts/run_mask_array.sh`, `guides/MaskTrackedCrabsHPC.md`, `pyproject.toml` | 51 | [ ] |
 
+</details>
