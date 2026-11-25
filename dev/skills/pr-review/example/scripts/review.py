@@ -132,7 +132,7 @@ def session_items(b):
     return items
 
 
-def test_items(b, edit_url=None):
+def test_items(b):
     """One item per row of the test steps table: | Step | Behaviour | Files | Done |.
     The diff shows each changed function in full, so a test and the code it tests
     are read whole, and each test links to the functions it calls (links.py)."""
@@ -163,7 +163,7 @@ def test_items(b, edit_url=None):
                 files=set(files),
                 detail="\n".join(files),
                 step=n,
-                links=test_links(diff, files, b.branch, edit_url),
+                links=test_links(diff, files, b.branch),
                 diff=diff,
             )
         )
@@ -366,10 +366,9 @@ def open_in_editor(path, line):
         print(f"Could not open the editor ({command}): {e}")
 
 
-def serve(review, stopped, port):
+def serve(review, stopped):
     """The page's server: GET / (the page), GET /api/state, POST /api/open/N, POST /api/stop,
-    GET /api/edit?file=F&line=L (opens the editor; linked from difit's comments, so it
-    answers 204 No Content, which leaves difit's page where it is)."""
+    GET /api/edit?file=F&line=L (opens the editor, from the page's file list; 204 No Content)."""
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):
@@ -414,7 +413,7 @@ def serve(review, stopped, port):
             else:
                 self.reply({"error": "not found"}, code=404)
 
-    httpd = ThreadingHTTPServer(("localhost", port), Handler)
+    httpd = ThreadingHTTPServer(("localhost", free_port()), Handler)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     return httpd
 
@@ -492,12 +491,10 @@ def main():
         ]
         comments.add_questions(json.loads(QUESTIONS.read_text()), earlier)
 
-    port = free_port()  # the page's, known before the items: tests mode links to it
     items = {
         "atomic": atomic_items,
         "sessions": session_items,
-        # no "http:": difit opens http links in a new tab, others in the same frame
-        "tests": lambda b: test_items(b, f"//localhost:{port}/api/edit"),
+        "tests": test_items,
         "all": lambda b: [Item("all", "Whole PR", [b.branch, b.base])],
     }[args.mode](b)
     review = Review(
@@ -507,7 +504,7 @@ def main():
     stopped = threading.Event()
     signal.signal(signal.SIGINT, lambda *_: stopped.set())
     signal.signal(signal.SIGTERM, lambda *_: stopped.set())
-    httpd = serve(review, stopped, port)
+    httpd = serve(review, stopped)
     url = f"http://localhost:{httpd.server_address[1]}/"
     print(
         f"Pass {pass_no}: {comments.path.relative_to(PACKAGE.parent)}\nReview page: {url}\n"

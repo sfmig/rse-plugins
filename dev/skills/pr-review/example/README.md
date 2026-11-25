@@ -5,7 +5,7 @@ A copy of the `pr-review/` folder made for the trial PR in `crabs-exploration`
 (scripts moved to `scripts/`, see NOTES.md feedback 22–29) and 2026-11-24 (difit runner
 rewritten as a review page in Python, see NOTES.md feedback 30–44) and 2026-11-25
 (tests and red flags moved into `2-review/`, `tab-sections.lua` colours the Quarto tabs by block;
-later the same day, `review.py tests` with test↔function links and editor links, see NOTES.md feedback 45–56).
+later the same day, `review.py tests` with test↔function links, and an editor file list in the sidebar, see NOTES.md feedback 45–56).
 
 | Block | State |
 |---|---|

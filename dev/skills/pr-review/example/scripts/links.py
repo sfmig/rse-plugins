@@ -2,10 +2,7 @@
 
 Each changed test gets a comment on its `def` line, "🔗 Tests: [`f`](#...)", and each
 function it calls gets one back, "🔗 Tested by: [`test_f`](#...)". Clicking a link
-scrolls difit to that line. A "✎" at the end opens the comment's own `def` line in the
-editor, through the review page's GET /api/edit (see review.py). That link starts
-with `//localhost:PORT`, not `http:`: difit opens http links in a new tab, and others in
-the same frame, where the 204 reply leaves difit's page as it is.
+scrolls difit to that line.
 
 A test's calls are found with `ast`, following the helpers of its own test file
 (so `test_main` -> `run_main` -> `main`), and kept if they are defined in a source
@@ -18,7 +15,6 @@ adds them to difit each time and never saves them (their ids start with "link-")
 
 import ast
 import re
-from urllib.parse import urlencode
 
 from atomic import git
 
@@ -77,10 +73,8 @@ def link(name, line_id):
     return f"[`{name}`](#{line_id})"
 
 
-def test_links(diff, files, rev, edit_url=None):
-    """The link comments of one step, as difit --comment imports. With edit_url (the
-    review page's /api/edit), each comment ends with a link that opens its line in
-    the editor."""
+def test_links(diff, files, rev):
+    """The link comments of one step, as difit --comment imports."""
     ids = line_ids(diff)
     tests_files = sorted(p for p in files if p.startswith("tests/") and p.endswith(".py"))
     source_files = sorted(p for p in files if not p.startswith("tests/") and p.endswith(".py"))
@@ -113,13 +107,8 @@ def test_links(diff, files, rev, edit_url=None):
         body = "🔗 Tested by: " + ", ".join(link(t, ids[(p, n)]) for t, p, n in tests)
         comments.append((path, line, body))
 
-    def editor(path, line):
-        if not edit_url:
-            return ""
-        return f" [✎]({edit_url}?{urlencode({'file': path, 'line': line})})"
-
     return [
         {"type": "thread", "id": f"{PREFIX}{i}", "filePath": path,
-         "position": {"side": "new", "line": line}, "body": body + editor(path, line)}
+         "position": {"side": "new", "line": line}, "body": body}
         for i, (path, line, body) in enumerate(comments, 1)
     ]

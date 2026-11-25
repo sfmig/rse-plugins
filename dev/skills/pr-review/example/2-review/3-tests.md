@@ -2,13 +2,19 @@
 
 ## Review steps
 
-`pr-review/scripts/review.py tests` shows one step at a time: a group of tests that check one behaviour, with the code they test and the fixtures they use. Switch between the files in difit's file list.
+You can review the tests like in the workflow before, or you can follow the approach suggested here.
 
-The diff shows each changed function in full (`git diff --function-context`), so each test and each function under test is shown whole.
+To show a group of tests that check one behaviour, with the code they test, one at a time, run:
+```bash
+pr-review/scripts/review.py tests
+```
 
-Each changed test has a link comment on its `def` line, "Tests: `function`", which jumps to the function it calls. Each function has one back, "Tested by: `test_...`". The links are found from the code (`scripts/links.py`), are not saved in the pass, and come back each time a step opens. The browser's Back button does not scroll back: use the link on the other side. The ✎ at the end of a link comment opens that `def` line in your editor (the one set in difit's settings, `~/.difit/config.json`). They work in difit's unified view.
+You can switch between the files in `difit`'s file list.
 
-To regroup the tests, edit the table. `review.py` reads the files from the *Files* column.
+
+Each changed test has a link comment on its `def` line, which jumps to the function it calls. Each function has one equivalent backlink to the test that tests it.
+
+To regroup the tests, edit the table below. `review.py` reads the files from the *Files* column.
 
 | Step | Behaviour | Files | Done |
 |---|---|---|---|
@@ -17,7 +23,6 @@ To regroup the tests, edit the table. `review.py` reads the files from the *File
 | 3 | Measuring masks and writing the 8 variables | `crabs/mask/mask_props.py`, `tests/test_unit/test_mask_props.py` | [ ] |
 | 4 | Labels layout and `main`: end to end, config, errors, metadata | `crabs/mask/mask_video.py`, `crabs/mask/config/mask_config.yaml`, `tests/test_unit/test_mask_video.py` | [ ] |
 
-Step 2 pairs the renamed code and test files with their old versions, `boxes_from_dataset.py` and `test_boxes_from_dataset.py`.
 
 ## Behaviours the tests check
 
