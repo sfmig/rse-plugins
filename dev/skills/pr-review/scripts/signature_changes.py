@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """List top-level functions and constants that differ between two git revisions.
 
 Deterministic input for the signatures view of a PR review: no LLM involved.

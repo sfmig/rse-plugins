@@ -1,6 +1,6 @@
 # PR review aid: notes for a future skill
 
-Draft notes, not a skill yet. No `SKILL.md` until the design settles.
+Design notes for the `pr-review` skill. A first draft of [`SKILL.md`](SKILL.md) (2026-11-25) builds the minimal layout, with `scripts/init_package.py` (fixed files from `example-minimal/`) and `scripts/check_package.py` (anchors, questions on added lines, tables `review.py` reads). Not run end to end on a new PR yet.
 
 ## Goal
 
