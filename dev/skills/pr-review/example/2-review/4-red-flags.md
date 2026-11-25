@@ -30,18 +30,3 @@ git diff d005d99 HEAD -- tests | grep -n "^[+-].*\(skip\|xfail\)"
 grep -rn "yaml.safe_load\|regionprops\|TransposeCodec\|BloscCodec" --include='*.py' crabs scripts
 ```
 
-## One path end to end
-
-Path: one video's masks → 8 variables in the store. Flowchart: `pr-review/1-general/2-flow.md`.
-
-| Step | Input | Transform | Output | Code |
-|---|---|---|---|---|
-| 1 | trajectories `ds_video` | reindex to masks `time`, drop coords | `position, shape, confidence` in group | `crabs/mask/utils/bbox_prompts.py:179-211` |
-| 2 | `label_of` | invert | `individual_of_label` | `crabs/mask/mask_props.py:265` → `:192-196` |
-| 3 | `position` per time chunk | finite anywhere? | frame indices | `crabs/mask/mask_props.py:327` → `:62-69` |
-| 4 | `labels` chunks with those frames | `regionprops_table` | per-label props | `crabs/mask/mask_props.py:158-160` → `:38-59` |
-| 5 | per-label props | label → individual index | `(time, individual)` arrays | `crabs/mask/mask_props.py:163-179` |
-| 6 | arrays | region write, `float_var_encoding` | 8 vars in group | `crabs/mask/mask_props.py:301-311`, `:339-346` |
-| 7 | store | consolidate | root metadata | `crabs/mask/mask_video.py:684` |
-
-Header frame count source: `cv2.CAP_PROP_FRAME_COUNT` (`crabs/utils/io.py:43-44`).
