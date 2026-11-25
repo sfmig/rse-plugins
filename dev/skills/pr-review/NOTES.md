@@ -48,6 +48,21 @@ Revised after feedback (2026-11-20). First draft had 14 flat files; the user cut
 
 Order inside block 1 goes from general to detailed: aim and components → flow → signatures → optional predict.
 
+### Minimal layout (2026-11-25, feedback 58–61)
+
+The layout to build first. The full layout above is the menu of optional extras (signatures, sequence diagram, predict, red flags). Example: [`example-minimal/`](example-minimal/README.md).
+
+| Tab | File | Content |
+|---|---|---|
+| Aim and diagrams | `1-general/1-aim.md` | Aim (before / with this PR), component diagrams before → after, flow diagram with its links table |
+| Atomic branch | `2-review/1-atomic-branch.md` | As in the full layout, plus which commits each review shows |
+| Review code with difit | `2-review/2-code.md` | **Code review**: `review.py all \| atomic \| sessions`, test files left out; review page, comments, passes, after-review prompts, session table, code questions |
+| Review tests with difit | `2-review/3-tests.md` | **Tests review**: `review.py tests`, step table, its own passes and questions, not tested, fail-before |
+| | `2-review/questions-code.json`, `questions-tests.json` | Preloaded questions, one file per review |
+| `scripts/` | as in the full layout | `review.py` picks the review from the mode; comments in `comments/code/pass-N/` and `comments/tests/pass-N/` |
+
+Two reviews, each with its own passes: first the code, without tests, then the tests, next to the code they test. A test file is one in a `tests/` folder, or named `test_*.py`, `*_test.py`, `conftest.py` (`atomic.is_test`). Atomic mode skips commits of tests only, keeping the table's commit numbers; a commit with both shows only its code files.
+
 **Reference example: block 1.** The user approved `1-general/` (2026-11-20) as the model for the other blocks: content, style, section links, back-to-top links. Copy of the full package, as of 2026-11-23: [`example/`](example/README.md).
 
 ### Methods that worked
@@ -134,6 +149,10 @@ Rows 12–14 and 22–29 describe the first, bash difit runner; it was replaced 
 | 55 | Save test comments separately? | No: one file per pass, and comments follow the code (row 34), so a comment on a test file shows in every mode. A tests run is a pass of its own anyway; `--pass N` joins it to another. To pick them out, filter on `tip.filePath` starting `tests/`: `item` is where a thread was *last* changed, so it moves if a reply is written in another mode |
 | 56 | Delete the passes that are not needed | Kept only passes with reviewer content (written, replied, resolved or deleted threads); the others held untouched copies of the preloaded questions. Questions resolved in an earlier pass stay skipped, as that is read only from passes that resolved them |
 | 57 | Per-test "behaviours the tests check" table in the tests file is not worth having | Dropped: it repeats the difit `def`-line links, and its line numbers go stale. Keep only the gap sections (not tested; bug-fix fail-before test); put one-off notes (unchanged test, renamed test) in the step table's Behaviour column |
+| 58 | A minimal version: aim and diagrams in one tab, atomic branch, review with difit, review tests with difit | Minimal layout, see above; trial in `crabs-exploration/pr-review-minimal/`. Dropped from the tabs: signatures, sequence diagram, predict, red flags |
+| 59 | Leave the tests out of the first difit review; keep code comments and test comments apart, as two reviews with their own passes (reverses row 55) | Code modes (`all`, `atomic`, `sessions`) never show a test file; `tests` mode is the tests review. Passes in `comments/code/` and `comments/tests/`, numbered apart; questions split into `questions-code.json` and `questions-tests.json`. A comment written on a source file during the tests review stays in the tests review |
+| 60 | Keep difit's own "Open in editor" (lost when the test files were filtered out with a diff on stdin) | difit's git mode has no path filter, so `review.py` makes a commit object with the base's files plus only the item's files (temporary index, `commit-tree`; no ref changed) and passes `<commit> <base>`. Used for sessions, the whole PR and atomic commits with test files; checked: same diff as `git diff -- files` for all 41 items, refs unchanged. Tests mode stays on stdin: its link ids come from the `--function-context` diff it sends |
+| 61 | (found while building 58) Preloaded questions go stale as the PR moves on | Re-anchored each question at the tip, checked with `sed -n`; dropped those that later commits settled (5 of 10) |
 
 ## Quarto support (to add to the skill)
 
@@ -176,10 +195,10 @@ Gotchas:
 Rewritten 2026-11-24 (feedback 30–44); tests mode and editor links added 2026-11-25 (feedback 45–56). Example: `example/scripts/`, about 1,250 lines in 5 files.
 
 ```
-review.py atomic [N|SHA] [--pass N]   one atomic commit at a time
-review.py sessions [N]   [--pass N]   rows of the session table
-review.py all            [--pass N]   base..branch, like "Files changed"
-review.py tests [N]      [--pass N]   the test steps of 3-tests.md (feedback 45–51)
+review.py atomic [N|SHA] [--pass N]   code review: one atomic commit at a time
+review.py sessions [N]   [--pass N]   code review: rows of the session table
+review.py all            [--pass N]   code review: base..branch, like "Files changed"
+review.py tests [N]      [--pass N]   tests review: the test steps of 3-tests.md (feedback 45–51)
 atomic.py extend                      add the PR branch's new commits to the atomic branch
 ```
 
@@ -197,7 +216,8 @@ How it works:
 | Outdated | No tip line → shown inline only on the commit; listed in the sidebar in tip modes |
 | Questions on the right commit | `git blame` the tip line on the atomic branch → (commit, line there) |
 | Atomic branch behind the PR branch | Tip mapping off for the run, one note printed, suggests `atomic.py extend` |
-| Session diffs | `git diff -M base branch -- files` on stdin (`difit -`) |
+| Session diffs | `git diff -M base branch -- files` on stdin (`difit -`). Minimal layout: a commit with only the item's files, in git mode (feedback 60) |
+| Test files out of the code review | `atomic.is_test(path)`; items keep their table numbers (`Item.number`), so `atomic 16` still means commit 16 |
 | Testing without a browser | `REVIEW_NO_BROWSER=1`; act as the reviewer with `POST /api/comments` on difit; a copy of `pr-review/` keeps real comments safe |
 
 Facts checked in difit 5.0.12 source:
@@ -209,7 +229,7 @@ Facts checked in difit 5.0.12 source:
 - The page never sets `document.title`, and nothing stops it being framed: so the wrapper page sets the tab title.
 - "Delete all comments" and resolve look the same through the API (threads gone).
 - `npx -y difit@X` contacts the npm registry on every start, even when cached (~2–4 s).
-- "Open in editor" is off for a diff on stdin (`openInEditorAvailable: !options.stdinDiff`); the CLI has no path filter for git mode.
+- "Open in editor" is off for a diff on stdin (`openInEditorAvailable: !options.stdinDiff`, and `POST /api/open-in-editor` refuses); the CLI has no path filter for git mode (`--help` of 5.0.12). Workaround: a commit holding only the files to show (feedback 60).
 - Diff line ids are `file-F-chunk-C-line-L` (indices in the diff; `-old`/`-new` added in split view), so they can be worked out from the diff the script sends. A markdown link `[x](#id)` in a comment keeps its href (no new tab) and scrolls to the line, even ~14,000 px away. Back clears the hash but does not scroll back. Checked in headless Chrome over CDP (Node's built-in `WebSocket`), unified view only.
 - Comments are markdown (remark-gfm), raw HTML dropped: no colours. A thread's collapsed state is internal (`useState(false)`), not settable from the import.
 - Links in comments: `http…` opens in a new tab (`target="_blank"`); any other allowed form (`#id`, `//host/path`) opens in the same frame. `vscode:` and other schemes are dropped. A 204 reply to a same-frame link leaves the page as it is.
@@ -239,6 +259,8 @@ UNSURE: replies of two threads on the same line may attach to the wrong thread o
 | Atomic branch grouping | none; needs judgment | LLM |
 | Atomic branch update | tree-hash match + `commit-tree` per new commit (`atomic.py extend`) | used |
 | Question → commit | `git blame` on atomic branch | used |
+| Test file or code file | path rule `atomic.is_test` | used (minimal layout) |
+| Code review without tests, in git mode | commit with only the item's files (temp index + `commit-tree`) | used (minimal layout) |
 | Test → function it tests | `ast` calls of the test, through its file's helpers, matched to defs in the step's source files (`links.py`) | used; some extra links (calls made to compute expected values, arg parsers) |
 | difit runs and saving | `review.py` | used |
 | Comment place, commit → tip | `git blame base..rev` line names | used |

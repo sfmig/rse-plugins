@@ -1,0 +1,256 @@
+<!doctype html>
+<!-- The review page served by review.py: the items on the left, the chosen one in difit. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PR review</title>
+<style>
+  :root {
+    --bg: #ffffff; --panel: #f6f8fa; --line: #d0d7de; --text: #1f2328; --muted: #656d76;
+    --accent: #0969da; --sel: #ddf4ff; --high: #cf222e; --med: #bc4c00; --low: #1a7f37; --none: #8c959f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117; --panel: #161b22; --line: #30363d; --text: #e6edf3; --muted: #8d96a0;
+      --accent: #4493f8; --sel: #1f2d3d; --high: #f85149; --med: #db6d28; --low: #3fb950; --none: #6e7681;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    display: grid; grid-template-columns: 320px 1fr; height: 100vh;
+    font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--text); background: var(--bg);
+  }
+  body.atomic { grid-template-columns: 190px 1fr; }
+  body.nosidebar { grid-template-columns: 1fr; }
+  body.nosidebar aside { display: none; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  /* sidebar */
+  aside { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  aside h1 { font-size: 14px; margin: 0; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  .scroll { overflow: auto; flex: 1; }
+  .label { padding: 8px 14px 4px; color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  .legend { display: flex; gap: 10px; padding: 0 14px 8px; color: var(--muted); font-size: 11px; }
+  .legend span { display: inline-flex; align-items: center; gap: 4px; }
+  ol { list-style: none; margin: 0; padding: 0 6px 8px; }
+  li {
+    display: grid; grid-template-columns: 12px 26px 1fr auto; gap: 6px; align-items: baseline;
+    padding: 5px 8px; border-radius: 6px; cursor: pointer;
+  }
+  li:hover { background: color-mix(in srgb, var(--sel) 60%, transparent); }
+  li.on { background: var(--sel); box-shadow: inset 2px 0 0 var(--accent); }
+  li.seen .title { color: var(--muted); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--none); align-self: center; }
+  .dot.high { background: var(--high); } .dot.med { background: var(--med); } .dot.low { background: var(--low); }
+  .num { color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+  .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .count { color: var(--muted); font-size: 11px; border: 1px solid var(--line); border-radius: 10px; padding: 0 6px; }
+  .count:empty { display: none; }
+  /* open a file of the item in the editor */
+  details.files summary { cursor: pointer; list-style: none; }
+  details.files summary::before { content: "▸ "; }
+  details.files[open] summary::before { content: "▾ "; }
+  details.files li { grid-template-columns: 1fr; }
+  details.files .path { color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .other { margin: 0 6px 6px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
+  .other .where { color: var(--muted); font-size: 11px; }
+  .other .body { margin-top: 2px; white-space: pre-wrap; }
+
+  /* top bar and diff */
+  main { display: flex; flex-direction: column; min-width: 0; }
+  .bar { display: flex; gap: 8px; align-items: center; padding: 6px 12px; border-bottom: 1px solid var(--line); }
+  .bar .message { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  .bar .message .mono { color: var(--muted); font-weight: normal; margin-right: 6px; }
+  button {
+    font: inherit; font-size: 12px; color: var(--text); background: var(--panel);
+    border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; cursor: pointer;
+  }
+  button:hover { border-color: var(--muted); }
+  button:disabled { opacity: .45; cursor: default; }
+  #stop { color: var(--high); }
+  .frame { position: relative; flex: 1; }
+  iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .status { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); white-space: pre-wrap; }
+  .overlay { position: fixed; inset: 0; display: grid; place-items: center; font-size: 15px;
+             background: color-mix(in srgb, var(--bg) 85%, transparent); }
+</style>
+</head>
+<body>
+<aside>
+  <h1 id="heading">PR review</h1>
+  <div class="scroll">
+    <div class="label" id="items-label">Items</div>
+    <div class="legend" id="legend" hidden>
+      <span><i class="dot high"></i>high</span><span><i class="dot med"></i>med</span><span><i class="dot low"></i>low</span>
+    </div>
+    <ol id="items"></ol>
+    <details class="files" id="files-box" hidden>
+      <summary class="label" id="files-label">Open in editor</summary>
+      <ol id="files"></ol>
+    </details>
+    <div class="label" id="others-label" hidden></div>
+    <div id="others"></div>
+  </div>
+</aside>
+<main>
+  <div class="bar">
+    <button id="toggle">«</button>
+    <span class="message" id="message"></span>
+    <button id="prev" title="Previous (Alt+↑)">‹ Prev</button>
+    <button id="next" title="Next (Alt+↓)">Next ›</button>
+    <button id="stop" title="Save the comments and stop the review">Stop review</button>
+  </div>
+  <div class="frame">
+    <div class="status" id="status"></div>
+    <iframe id="difit" hidden></iframe>
+  </div>
+</main>
+<div class="overlay" id="overlay" hidden>The review has stopped. Comments are saved. You can close this tab.</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let state = null;     // from /api/state: review, mode, pass, items, others
+let current = -1;     // index of the item on screen
+
+async function api(path, method = "GET") {
+  const r = await fetch(path, { method });
+  const body = await r.json();
+  if (!r.ok) throw new Error(body.error);
+  return body;
+}
+
+// Items already opened in this pass are greyed out (kept in the browser)
+const seenKey = () => `pr-review-seen:${state.review}:${state.mode}:${state.pass}`;
+const seen = () => new Set(JSON.parse(localStorage.getItem(seenKey()) || "[]"));
+const markSeen = (name) => localStorage.setItem(seenKey(), JSON.stringify([...seen().add(name)]));
+
+function render() {
+  const atomic = state.mode === "atomic";
+  const tests = state.mode === "tests";
+  document.body.classList.toggle("atomic", atomic);
+  $("heading").textContent = `${state.review} review · ${state.mode} · pass ${state.pass}`;
+  $("items-label").textContent = `${atomic ? "Commits" : tests ? "Steps" : "Items"} (${state.items.length})`;
+  $("legend").hidden = !atomic;
+
+  const done = seen();
+  $("items").replaceChildren(...state.items.map((it, i) => {
+    const li = document.createElement("li");
+    li.className = (i === current ? "on " : "") + (done.has(it.name) ? "seen" : "");
+    li.title = it.detail ? `${it.title}\n\n${it.detail}` : it.title;
+    li.innerHTML = `<i class="dot ${it.weight || ""}"></i><span class="num">${it.number}</span>` +
+                   `<span class="title ${atomic ? "mono" : ""}"></span><span class="count"></span>`;
+    li.querySelector(".title").textContent = atomic ? it.sha.slice(0, 7) : it.title;
+    const count = li.querySelector(".count");
+    count.textContent = it.threads || "";
+    count.title = `${it.threads} open thread${it.threads === 1 ? "" : "s"}`;
+    li.onclick = () => show(i);
+    return li;
+  }));
+
+  $("others-label").hidden = state.others.length === 0;
+  $("others-label").textContent = `${state.othersTitle} (${state.others.length})`;
+  $("others").replaceChildren(...state.others.map((o) => {
+    const div = document.createElement("div");
+    div.className = "other";
+    div.innerHTML = `<div class="where mono"></div><div class="body"></div>`;
+    div.querySelector(".where").textContent = `${o.file}:${o.line}` + (o.sha ? `  @${o.sha.slice(0, 7)}` : "") +
+      (o.replies ? `  +${o.replies} repl${o.replies > 1 ? "ies" : "y"}` : "");
+    div.querySelector(".body").textContent = o.body;
+    return div;
+  }));
+
+  // the bar: the commit message in atomic mode, the step in tests mode, nothing otherwise
+  const it = state.items[current];
+  $("message").innerHTML = "";
+  $("message").title = "";
+  if ((atomic || tests) && it) {
+    $("message").innerHTML = `<span class="mono"></span><span></span>`;
+    $("message").firstChild.textContent = atomic ? it.sha.slice(0, 7) : `Step ${it.number}/${state.items.length}`;
+    $("message").lastChild.textContent = it.title;
+    $("message").title = it.detail ? `${it.title}\n\n${it.detail}` : it.title;
+  }
+  $("prev").disabled = current <= 0;
+  $("next").disabled = current >= state.items.length - 1;
+  document.title = it ? `${it.number}. ${it.title} · ${state.review} review` : "PR review";
+}
+
+async function show(i) {
+  if (i < 0 || i >= state.items.length) return;
+  current = i;
+  render();
+  $("difit").hidden = true;
+  $("status").textContent = "Starting difit…";
+  try {
+    const { url, files } = await api(`/api/open/${i}`, "POST");
+    if (current !== i) return;          // another item was chosen meanwhile
+    showFiles(files);
+    $("difit").src = url;
+    $("difit").hidden = false;
+    markSeen(state.items[i].name);
+    render();
+  } catch (e) {
+    $("status").textContent = e.message;
+  }
+}
+
+
+// the files of the item on screen; a click opens one in the editor at its first change
+function showFiles(files) {
+  $("files-box").hidden = files.length === 0;
+  $("files-label").textContent = `✎ Open in editor (${files.length})`;
+  $("files").replaceChildren(...files.map((f) => {
+    const li = document.createElement("li");
+    li.title = `${f.file}:${f.line}`;
+    li.innerHTML = `<span class="title"></span><span class="path mono"></span>`;
+    li.querySelector(".title").textContent = f.file.split("/").pop();
+    li.querySelector(".path").textContent = f.file;
+    li.onclick = () => fetch(`/api/edit?file=${encodeURIComponent(f.file)}&line=${f.line}`).catch(() => {});
+    return li;
+  }));
+}
+$("files-box").open = localStorage.getItem("pr-review-files-open") === "1";
+$("files-box").ontoggle = () => localStorage.setItem("pr-review-files-open", $("files-box").open ? "1" : "");
+
+async function refresh() {             // thread counts change as you comment
+  try {
+    state = await api("/api/state");
+    render();
+  } catch {
+    $("overlay").hidden = false;         // the review was stopped
+  }
+}
+
+function setSidebar(hidden) {
+  document.body.classList.toggle("nosidebar", hidden);
+  localStorage.setItem("pr-review-nosidebar", hidden ? "1" : "");
+  $("toggle").textContent = hidden ? "»" : "«";
+  $("toggle").title = `${hidden ? "Show" : "Hide"} the sidebar (Alt+B)`;
+}
+const toggleSidebar = () => setSidebar(!document.body.classList.contains("nosidebar"));
+
+$("toggle").onclick = toggleSidebar;
+$("prev").onclick = () => show(current - 1);
+$("next").onclick = () => show(current + 1);
+$("stop").onclick = async () => {
+  if (!confirm("Save the comments and stop the review?")) return;
+  await api("/api/stop", "POST").catch(() => {});
+  $("overlay").hidden = false;
+};
+document.addEventListener("keydown", (e) => {
+  if (!e.altKey) return;
+  const action = { ArrowUp: () => show(current - 1), ArrowDown: () => show(current + 1), KeyB: toggleSidebar }[e.code];
+  if (action) { e.preventDefault(); action(); }
+});
+
+setSidebar(localStorage.getItem("pr-review-nosidebar") === "1");
+(async () => {
+  await refresh();
+  if (state) show(state.start);
+  setInterval(refresh, 3000);
+})();
+</script>
+</body>
+</html>

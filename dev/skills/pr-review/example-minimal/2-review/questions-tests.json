@@ -1,0 +1,20 @@
+[
+ {
+  "type": "thread",
+  "filePath": "tests/test_unit/test_mask_props.py",
+  "position": {
+   "side": "new",
+   "line": 392
+  },
+  "body": "T1: Does this overwrite check fail before the fix in bcefddd? UNSURE"
+ },
+ {
+  "type": "thread",
+  "filePath": "crabs/mask/mask_video.py",
+  "position": {
+   "side": "new",
+   "line": 384
+  },
+  "body": "T2: No test reaches this RuntimeError (early frame read failure). Add one?"
+ }
+]

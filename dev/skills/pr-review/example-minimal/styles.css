@@ -1,0 +1,44 @@
+/* Diff blocks: colour whole added / removed lines, as on GitHub.
+   Quarto marks a "+" line with span.va and a "-" line with span.st. */
+pre.diff code > span {
+  display: inline-block;
+  width: 100%;
+}
+pre.diff code > span:has(> span.va) {
+  background: #e6ffec;
+}
+pre.diff code > span:has(> span.st) {
+  background: #ffebe9;
+}
+pre.diff span.va {
+  color: #116329;
+}
+pre.diff span.st {
+  color: #82071e;
+}
+
+/* Headings that are file paths: plain text size and colour */
+h2 code,
+h3 code {
+  font-size: 0.8em;
+  color: inherit;
+  background: none;
+  padding: 0;
+}
+
+/* One row of tabs, coloured by section (see tab-sections.lua).
+   Each section sets --tab; a gap separates the sections. */
+.nav-tabs .nav-link:has(.tab-general) { --tab: #0969da; --tab-bg: #ddf4ff; }
+.nav-tabs .nav-link:has(.tab-review)  { --tab: #1a7f37; --tab-bg: #dafbe1; }
+.nav-tabs .nav-link:has([class^="tab-"]) {
+  color: var(--tab);
+  border-top: 3px solid var(--tab);
+}
+.nav-tabs .nav-link.active:has([class^="tab-"]) {
+  color: var(--tab);
+  background: var(--tab-bg);
+  font-weight: 600;
+}
+.nav-tabs .nav-item:has(.tab-general) + .nav-item:has(.tab-review) {
+  margin-left: 1.5rem;
+}
