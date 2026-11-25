@@ -38,9 +38,10 @@ Revised after feedback (2026-11-20). First draft had 14 flat files; the user cut
 | 2. Review | `1-atomic-branch.md` | Original commits; atomic scratch branch table |
 | | `2-difit.md` | Two difit options, how comments are saved, session plan, preloaded questions |
 | | `questions.json` | Skeptical questions as difit comments |
-| | `3-tests.md` | Test plan table for difit; behaviours tested and not tested (was block 3, `3-tests/1-tests.md`, until 2026-11-25) |
+| | `3-tests.md` | Step table for `review.py tests` (one module under test per step: its source and test files); behaviours tested and not tested (was block 3, `3-tests/1-tests.md`, until 2026-11-25) |
 | | `4-red-flags.md` | AI-specific checks, read last |
 | `scripts/` | `review.py` | Review page + difit, saves comments to `comments/pass-N/`; read-only on git |
+| | `links.py` | Tests mode: link comments between each test and the functions it calls |
 | | `comments.py` | Comments file of a pass; follows commit lines to the tip with `git blame` |
 | | `page.html` | The review page |
 | | `atomic.py` | The PR's branches; `atomic.py extend` adds the PR branch's new commits to the atomic branch |
@@ -120,6 +121,13 @@ Rows 12–14 and 22–29 describe the first, bash difit runner; it was replaced 
 | 42 | Readable by a human and modular; HTML separate | 3 files in `scripts/`: `review.py` (command, branches, items, difit, page server), `comments.py` (no difit or HTTP: pass file, saving, commit→tip), `page.html` (plain HTML/CSS/JS, data from `/api/state`). Kept under `scripts/`, not a new `review/` folder |
 | 44 | Where does extending the atomic branch belong? | Own file `atomic.py` (branches + `extend`), as row 27: it maintains the atomic branch (block 2, documented in `1-atomic-branch.md`), and it is the only code that changes a branch. `review.py` imports `Branches` from it and never changes a branch. Room for the other deterministic atomic-branch steps (zero-diff check, commit list) |
 | 43 | Scripts independent of the PR to review | Branches from git (checked-out branch, `<branch>-atomic`, origin's default branch; `BRANCH`/`MAIN` override). Inputs only from the package's files: session table, commits table, `questions.json` |
+| 45 | Revisit reviewing tests: difit on test files only, information given gradually (reverses row 30) | `review.py tests`: one step per behaviour, rows from the step table in `3-tests.md`; the step's diff uses `git diff --function-context`, so each test is shown whole; bar shows "Step n/N · behaviour" |
+| 46 | Test by test, or grouped? | Grouped. Test by test = ~30 page loads and split fixtures. First 7 behaviour steps; steps that ended up showing the same diff were merged, leaving one step per module under test (4 in the trial) |
+| 47 | Guess first ("how would you test this?" before the diff) and a "Claims / Check" comment on each test | Both built, both dropped by the user. Kept instead: the code under test next to its tests, by adding the source files to the step's *Files* (no code change) |
+| 48 | Keep the "not tested" and "fail-before" tables as they were (visible, not held back to the end) | Unchanged at the bottom of `3-tests.md` |
+| 49 | "Open in editor" missing on hover in sessions and tests modes | Cause: difit hides it for a diff on stdin (`openInEditorAvailable: !options.stdinDiff`), and git mode has no file filter. Left open; idea: `vscode://file/...` links to the step's files in the review page (no line) |
+| 50 | Click a test's name to go to the function it tests, inside difit | `links.py`: "🔗 Tests: [`f`](#file-F-chunk-C-line-L)" on each test's `def` line, "🔗 Tested by: …" on each function. Calls found with `ast`, through the test file's helpers; kept if defined in the step's source files. Both directions kept: Back does not scroll back. Not saved (ids `link-…`), re-added each time a step opens |
+| 51 | Link comments collapsed by default, or in another colour | Neither possible in difit 5.0.12 (see facts). A 🔗 prefix instead. One direction only was offered to cut the count; user kept both |
 
 ## Quarto support (to add to the skill)
 
@@ -165,6 +173,7 @@ Rewritten 2026-11-24 (feedback 30–44). Example: `example/scripts/`, about 800 
 review.py atomic [N|SHA] [--pass N]   one atomic commit at a time
 review.py sessions [N]   [--pass N]   rows of the session table
 review.py all            [--pass N]   base..branch, like "Files changed"
+review.py tests [N]      [--pass N]   the test steps of 3-tests.md (feedback 45–51)
 atomic.py extend                      add the PR branch's new commits to the atomic branch
 ```
 
@@ -194,6 +203,9 @@ Facts checked in difit 5.0.12 source:
 - The page never sets `document.title`, and nothing stops it being framed: so the wrapper page sets the tab title.
 - "Delete all comments" and resolve look the same through the API (threads gone).
 - `npx -y difit@X` contacts the npm registry on every start, even when cached (~2–4 s).
+- "Open in editor" is off for a diff on stdin (`openInEditorAvailable: !options.stdinDiff`); the CLI has no path filter for git mode.
+- Diff line ids are `file-F-chunk-C-line-L` (indices in the diff; `-old`/`-new` added in split view), so they can be worked out from the diff the script sends. A markdown link `[x](#id)` in a comment keeps its href (no new tab) and scrolls to the line, even ~14,000 px away. Back clears the hash but does not scroll back. Checked in headless Chrome over CDP (Node's built-in `WebSocket`), unified view only.
+- Comments are markdown (remark-gfm), raw HTML dropped: no colours. A thread's collapsed state is internal (`useState(false)`), not settable from the import.
 
 Gotchas from this round:
 
@@ -219,6 +231,7 @@ UNSURE: replies of two threads on the same line may attach to the wrong thread o
 | Atomic branch grouping | none; needs judgment | LLM |
 | Atomic branch update | tree-hash match + `commit-tree` per new commit (`atomic.py extend`) | used |
 | Question → commit | `git blame` on atomic branch | used |
+| Test → function it tests | `ast` calls of the test, through its file's helpers, matched to defs in the step's source files (`links.py`) | used; some extra links (calls made to compute expected values, arg parsers) |
 | difit runs and saving | `review.py` | used |
 | Comment place, commit → tip | `git blame base..rev` line names | used |
 | Tests added/removed | `pytest --collect-only -q` at base vs tip, diff the lists | idea |
