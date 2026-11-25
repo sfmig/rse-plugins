@@ -40,7 +40,7 @@ Revised after feedback (2026-11-20). First draft had 14 flat files; the user cut
 | | `questions.json` | Skeptical questions as difit comments |
 | | `3-tests.md` | Step table for `review.py tests` (one module under test per step: its source and test files); behaviours tested and not tested (was block 3, `3-tests/1-tests.md`, until 2026-11-25) |
 | | `4-red-flags.md` | AI-specific checks, read last |
-| `scripts/` | `review.py` | Review page + difit, saves comments to `comments/pass-N/`; read-only on git |
+| `scripts/` | `review.py` | Review page + difit, saves comments to `comments/pass-N/`; opens files in the editor (`/api/edit`); read-only on git |
 | | `links.py` | Tests mode: link comments between each test and the functions it calls |
 | | `comments.py` | Comments file of a pass; follows commit lines to the tip with `git blame` |
 | | `page.html` | The review page |
@@ -125,9 +125,14 @@ Rows 12–14 and 22–29 describe the first, bash difit runner; it was replaced 
 | 46 | Test by test, or grouped? | Grouped. Test by test = ~30 page loads and split fixtures. First 7 behaviour steps; steps that ended up showing the same diff were merged, leaving one step per module under test (4 in the trial) |
 | 47 | Guess first ("how would you test this?" before the diff) and a "Claims / Check" comment on each test | Both built, both dropped by the user. Kept instead: the code under test next to its tests, by adding the source files to the step's *Files* (no code change) |
 | 48 | Keep the "not tested" and "fail-before" tables as they were (visible, not held back to the end) | Unchanged at the bottom of `3-tests.md` |
-| 49 | "Open in editor" missing on hover in sessions and tests modes | Cause: difit hides it for a diff on stdin (`openInEditorAvailable: !options.stdinDiff`), and git mode has no file filter. Left open; idea: `vscode://file/...` links to the step's files in the review page (no line) |
+| 49 | "Open in editor" missing on hover in sessions and tests modes | Cause: difit hides it for a diff on stdin (`openInEditorAvailable: !options.stdinDiff`), and git mode has no file filter. Solved by rows 53–54 |
 | 50 | Click a test's name to go to the function it tests, inside difit | `links.py`: "🔗 Tests: [`f`](#file-F-chunk-C-line-L)" on each test's `def` line, "🔗 Tested by: …" on each function. Calls found with `ast`, through the test file's helpers; kept if defined in the step's source files. Both directions kept: Back does not scroll back. Not saved (ids `link-…`), re-added each time a step opens |
 | 51 | Link comments collapsed by default, or in another colour | Neither possible in difit 5.0.12 (see facts). A 🔗 prefix instead. One direction only was offered to cut the count; user kept both |
+| 52 | Open the test review in unified view by default | Already so: difit keeps `diffViewMode` in `~/.difit/config.json`, which every difit server reads (its browser storage is per port, so it is lost between runs). One setting for all modes; a tests-only setting would be ~5 lines (`DIFIT_CONFIG_DIR` to a copied config), not done |
+| 53 | A simple way to open the file in the editor | A "✎" at the end of each 🔗 comment opens its `def` line. Link to the review page's `GET /api/edit?file&line`, which runs the editor set in difit's settings (`code -g %file:%line`) and replies 204. The link starts `//localhost:PORT`, not `http:`, so difit opens it in the same frame (not a new tab), and the 204 leaves difit's page as it is. Only files tracked in the repo |
+| 54 | Link the editor to the file being reviewed, inside a collapsible | Sidebar `<details>` "✎ Open in editor (n)": the files of the item on screen, each opened at its first changed line through the same route. Every mode (tests, sessions, commits, whole PR); deleted files left out; open/closed kept in localStorage |
+| 55 | Save test comments separately? | No: one file per pass, and comments follow the code (row 34), so a comment on a test file shows in every mode. A tests run is a pass of its own anyway; `--pass N` joins it to another. To pick them out, filter on `tip.filePath` starting `tests/`: `item` is where a thread was *last* changed, so it moves if a reply is written in another mode |
+| 56 | Delete the passes that are not needed | Kept only passes with reviewer content (written, replied, resolved or deleted threads); the others held untouched copies of the preloaded questions. Questions resolved in an earlier pass stay skipped, as that is read only from passes that resolved them |
 
 ## Quarto support (to add to the skill)
 
@@ -167,7 +172,7 @@ Gotchas:
 
 ## difit runner (`scripts/`)
 
-Rewritten 2026-11-24 (feedback 30–44). Example: `example/scripts/`, about 800 lines in 4 files.
+Rewritten 2026-11-24 (feedback 30–44); tests mode and editor links added 2026-11-25 (feedback 45–56). Example: `example/scripts/`, about 1,250 lines in 5 files.
 
 ```
 review.py atomic [N|SHA] [--pass N]   one atomic commit at a time
@@ -206,6 +211,8 @@ Facts checked in difit 5.0.12 source:
 - "Open in editor" is off for a diff on stdin (`openInEditorAvailable: !options.stdinDiff`); the CLI has no path filter for git mode.
 - Diff line ids are `file-F-chunk-C-line-L` (indices in the diff; `-old`/`-new` added in split view), so they can be worked out from the diff the script sends. A markdown link `[x](#id)` in a comment keeps its href (no new tab) and scrolls to the line, even ~14,000 px away. Back clears the hash but does not scroll back. Checked in headless Chrome over CDP (Node's built-in `WebSocket`), unified view only.
 - Comments are markdown (remark-gfm), raw HTML dropped: no colours. A thread's collapsed state is internal (`useState(false)`), not settable from the import.
+- Links in comments: `http…` opens in a new tab (`target="_blank"`); any other allowed form (`#id`, `//host/path`) opens in the same frame. `vscode:` and other schemes are dropped. A 204 reply to a same-frame link leaves the page as it is.
+- User settings live in `~/.difit/config.json` (or `$DIFIT_CONFIG_DIR/config.json`): `diffViewMode`, theme, and the editor (`appearance.editor.command`, `argsTemplate` with `%file`, `%line`). Browser storage is per origin, so per port.
 
 Gotchas from this round:
 

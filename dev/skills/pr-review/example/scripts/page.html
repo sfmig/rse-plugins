@@ -49,6 +49,12 @@
   .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .count { color: var(--muted); font-size: 11px; border: 1px solid var(--line); border-radius: 10px; padding: 0 6px; }
   .count:empty { display: none; }
+  /* open a file of the item in the editor */
+  details.files summary { cursor: pointer; list-style: none; }
+  details.files summary::before { content: "▸ "; }
+  details.files[open] summary::before { content: "▾ "; }
+  details.files li { grid-template-columns: 1fr; }
+  details.files .path { color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .other { margin: 0 6px 6px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
   .other .where { color: var(--muted); font-size: 11px; }
   .other .body { margin-top: 2px; white-space: pre-wrap; }
@@ -81,6 +87,10 @@
       <span><i class="dot high"></i>high</span><span><i class="dot med"></i>med</span><span><i class="dot low"></i>low</span>
     </div>
     <ol id="items"></ol>
+    <details class="files" id="files-box" hidden>
+      <summary class="label" id="files-label">Open in editor</summary>
+      <ol id="files"></ol>
+    </details>
     <div class="label" id="others-label" hidden></div>
     <div id="others"></div>
   </div>
@@ -119,9 +129,10 @@ const markSeen = (name) => localStorage.setItem(seenKey(), JSON.stringify([...se
 
 function render() {
   const atomic = state.mode === "atomic";
+  const tests = state.mode === "tests";
   document.body.classList.toggle("atomic", atomic);
   $("heading").textContent = `${state.mode} · pass ${state.pass}`;
-  $("items-label").textContent = `${atomic ? "Commits" : "Items"} (${state.items.length})`;
+  $("items-label").textContent = `${atomic ? "Commits" : tests ? "Steps" : "Items"} (${state.items.length})`;
   $("legend").hidden = !atomic;
 
   const done = seen();
@@ -151,13 +162,13 @@ function render() {
     return div;
   }));
 
-  // the bar: the commit message in atomic mode, nothing otherwise
+  // the bar: the commit message in atomic mode, the step in tests mode, nothing otherwise
   const it = state.items[current];
   $("message").innerHTML = "";
   $("message").title = "";
-  if (atomic && it) {
+  if ((atomic || tests) && it) {
     $("message").innerHTML = `<span class="mono"></span><span></span>`;
-    $("message").firstChild.textContent = it.sha.slice(0, 7);
+    $("message").firstChild.textContent = atomic ? it.sha.slice(0, 7) : `Step ${it.step}/${state.items.length}`;
     $("message").lastChild.textContent = it.title;
     $("message").title = it.detail ? `${it.title}\n\n${it.detail}` : it.title;
   }
@@ -173,8 +184,9 @@ async function show(i) {
   $("difit").hidden = true;
   $("status").textContent = "Starting difit…";
   try {
-    const { url } = await api(`/api/open/${i}`, "POST");
+    const { url, files } = await api(`/api/open/${i}`, "POST");
     if (current !== i) return;          // another item was chosen meanwhile
+    showFiles(files);
     $("difit").src = url;
     $("difit").hidden = false;
     markSeen(state.items[i].name);
@@ -183,6 +195,24 @@ async function show(i) {
     $("status").textContent = e.message;
   }
 }
+
+
+// the files of the item on screen; a click opens one in the editor at its first change
+function showFiles(files) {
+  $("files-box").hidden = files.length === 0;
+  $("files-label").textContent = `✎ Open in editor (${files.length})`;
+  $("files").replaceChildren(...files.map((f) => {
+    const li = document.createElement("li");
+    li.title = `${f.file}:${f.line}`;
+    li.innerHTML = `<span class="title"></span><span class="path mono"></span>`;
+    li.querySelector(".title").textContent = f.file.split("/").pop();
+    li.querySelector(".path").textContent = f.file;
+    li.onclick = () => fetch(`/api/edit?file=${encodeURIComponent(f.file)}&line=${f.line}`).catch(() => {});
+    return li;
+  }));
+}
+$("files-box").open = localStorage.getItem("pr-review-files-open") === "1";
+$("files-box").ontoggle = () => localStorage.setItem("pr-review-files-open", $("files-box").open ? "1" : "");
 
 async function refresh() {             // thread counts change as you comment
   try {

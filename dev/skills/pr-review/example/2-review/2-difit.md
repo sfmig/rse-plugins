@@ -11,12 +11,12 @@ npm i -g difit@5.0.12
 Then, run the **helper script**:
 
 ```bash
-pr-review/scripts/review.py
+pr-review/scripts/review.py [all | atomic | sessions]
 ```
 
 ## Workflows
 
-We support three possible workflows to review the files:
+We support four possible workflows to review the files:
 
 * **Whole PR**: 
     * `pr-review/scripts/review.py all` 
@@ -27,10 +27,13 @@ We support three possible workflows to review the files:
 * **By session**: 
     * `pr-review/scripts/review.py sessions` 
     * Shows one session at a time. The sessions come from the table in [Session plan](#session-plan-table), so you can regroup files by editing the table directly.
+* **Tests, step by step**:
+    * `pr-review/scripts/review.py tests`
+    * Shows the tests one behaviour at a time, with the code they test, and links between each test and the functions it calls. The steps come from the table in `2-review/3-tests.md`.
 
 To res**ume from a given item, add its number (or a commit hash in atomic mode):
 
-* E.g. `pr-review/scripts/review.py sessions 5` starts at the 5th row of the session table.
+* E.g. `pr-review/scripts/review.py sessions 5` starts at the 5th row of the session table (`tests 3` starts at step 3).
 * E.g. `pr-review/scripts/review.py atomic 501a731` starts at commit 501a731.
     * A short hash made of only digits may be read as a position - in that case please provide a longer hash.
 
@@ -42,6 +45,7 @@ To res**ume from a given item, add its number (or a commit hash in atomic mode):
 
 * The bar above the diff has **Prev** / **Next** buttons (or <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>Alt</kbd>+<kbd>↓</kbd>). 
     * In commit-by-commit mode it also shows the commit's subject line (hover it for the full message).
+* The sidebar's collapsible **✎ Open in editor** lists the files of the item on screen. Click one to open it in your editor (the one set in difit's settings) at its first changed line. difit's own "Open in editor" is missing in session and tests modes.
 * To stop the review, use the page's **Stop review** button or `CTRL+C` in the terminal.
     * The comments are saved first.
 

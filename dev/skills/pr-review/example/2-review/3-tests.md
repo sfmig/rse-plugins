@@ -1,51 +1,58 @@
 # Review tests with difit
 
-## Test files to review
+## Review steps
 
-To review these files in difit, add them as a row of the session table in `2-review/2-difit.md`, or use `pr-review/scripts/review.py all`.
+`pr-review/scripts/review.py tests` shows one step at a time: a group of tests that check one behaviour, with the code they test and the fixtures they use. Switch between the files in difit's file list.
 
-| # | Files | Lines | Done |
+The diff shows each changed function in full (`git diff --function-context`), so each test and each function under test is shown whole.
+
+Each changed test has a link comment on its `def` line, "Tests: `function`", which jumps to the function it calls. Each function has one back, "Tested by: `test_...`". The links are found from the code (`scripts/links.py`), are not saved in the pass, and come back each time a step opens. The browser's Back button does not scroll back: use the link on the other side. The ✎ at the end of a link comment opens that `def` line in your editor (the one set in difit's settings, `~/.difit/config.json`). They work in difit's unified view.
+
+To regroup the tests, edit the table. `review.py` reads the files from the *Files* column.
+
+| Step | Behaviour | Files | Done |
 |---|---|---|---|
-| 1 | `tests/test_unit/test_float_encoding.py` | 48 | [ ] |
-| 2 | `tests/test_unit/test_bbox_prompts.py`, `tests/test_unit/test_boxes_from_dataset.py`, `tests/fixtures/trajectories.py` | 493 | [ ] |
-| 3 | `tests/test_unit/test_mask_props.py` | 447 | [ ] |
-| 4 | `tests/test_unit/test_mask_video.py` | 220 | [ ] |
+| 1 | Float encoding: time last, lossless | `crabs/mask/utils/float_encoding.py`, `tests/test_unit/test_float_encoding.py` | [ ] |
+| 2 | Boxes: from a trajectories clip, and copied into a masks store | `crabs/mask/utils/bbox_prompts.py`, `crabs/mask/utils/boxes_from_dataset.py`, `tests/test_unit/test_bbox_prompts.py`, `tests/test_unit/test_boxes_from_dataset.py`, `tests/fixtures/trajectories.py` | [ ] |
+| 3 | Measuring masks and writing the 8 variables | `crabs/mask/mask_props.py`, `tests/test_unit/test_mask_props.py` | [ ] |
+| 4 | Labels layout and `main`: end to end, config, errors, metadata | `crabs/mask/mask_video.py`, `crabs/mask/config/mask_config.yaml`, `tests/test_unit/test_mask_video.py` | [ ] |
 
-Row 2 pairs the renamed test file with its old version.
+Step 2 pairs the renamed code and test files with their old versions, `boxes_from_dataset.py` and `test_boxes_from_dataset.py`.
 
 ## Behaviours the tests check
 
-| Behaviour | Test |
-|---|---|
-| Float encoding moves `time` last | `tests/test_unit/test_float_encoding.py:19` |
-| Float encoding is bit-identical, NaN included | `tests/test_unit/test_float_encoding.py:25` |
-| Boxes = `position ± shape/2`, keyed by frame | `tests/test_unit/test_bbox_prompts.py:42` |
-| Dask chunking does not change boxes | `tests/test_unit/test_bbox_prompts.py:71` |
-| Sparse time axis raises | `tests/test_unit/test_bbox_prompts.py:110` |
-| Whole video dataset raises | `tests/test_unit/test_bbox_prompts.py:149` |
-| Copied boxes equal source, same chunks and dtype | `tests/test_unit/test_bbox_prompts.py:202` |
-| Boxes NaN-padded when masks `time` longer | `tests/test_unit/test_bbox_prompts.py:247` |
-| Boxes cut when masks `time` shorter, none lost | `tests/test_unit/test_bbox_prompts.py:270` |
-| Box copy errors raise before any write | `tests/test_unit/test_bbox_prompts.py:317` |
-| Copied measuring code matches script (PR #298) | `tests/test_unit/test_mask_props.py:139` |
-| Known ellipse at π/4 gives expected values | `tests/test_unit/test_mask_props.py:171` |
-| Label not in `label_of` raises | `tests/test_unit/test_mask_props.py:200` |
-| Measured frames = frames SAM2 is prompted on | `tests/test_unit/test_mask_props.py:215` |
-| Only frames with finite `position` measured | `tests/test_unit/test_mask_props.py:226` |
-| 8 variables: layout, codecs, values | `tests/test_unit/test_mask_props.py:260` |
-| Values land at right individual, any `label_of` | `tests/test_unit/test_mask_props.py:339` |
-| Bad inputs raise before any write | `tests/test_unit/test_mask_props.py:372` |
-| Existing vars raise unless `overwrite=True` | `tests/test_unit/test_mask_props.py:392` |
-| README snippet for old stores works | `tests/test_unit/test_mask_props.py:419` |
-| Labels chunks, shards, transpose, zstd 15 | `tests/test_unit/test_mask_video.py:221` (asserts `:242-248`) |
-| `main`: masks match trajectories per frame | `tests/test_unit/test_mask_video.py:406` |
-| Bad inputs raise before SAM2 loads | `tests/test_unit/test_mask_video.py:508` |
-| Separate runs share one store | `tests/test_unit/test_mask_video.py:526` |
-| Consolidated metadata lists new arrays | `tests/test_unit/test_mask_video.py:587` |
-| Short clip video raises | `tests/test_unit/test_mask_video.py:614` |
-| `mask_config` attr holds run values | `tests/test_unit/test_mask_video.py:634` |
-| Bad config file raises before SAM2 loads | `tests/test_unit/test_mask_video.py:677` |
-| Works on store with stale consolidated root | `tests/test_unit/test_mask_video.py:700` |
+| Step | Behaviour | Test |
+|---|---|---|
+| 1 | Float encoding moves `time` last | `tests/test_unit/test_float_encoding.py:19` |
+| 1 | Float encoding is bit-identical, NaN included | `tests/test_unit/test_float_encoding.py:25` |
+| 2 | Boxes = `position ± shape/2`, keyed by frame | `tests/test_unit/test_bbox_prompts.py:42` |
+| 2 | Dask chunking does not change boxes | `tests/test_unit/test_bbox_prompts.py:71` |
+| 2 | Sparse time axis raises | `tests/test_unit/test_bbox_prompts.py:110` |
+| 2 | Whole video dataset raises | `tests/test_unit/test_bbox_prompts.py:149` |
+| 2 | Copied boxes equal source, same chunks and dtype | `tests/test_unit/test_bbox_prompts.py:202` |
+| 2 | Boxes NaN-padded when masks `time` longer | `tests/test_unit/test_bbox_prompts.py:247` |
+| 2 | Boxes cut when masks `time` shorter, none lost | `tests/test_unit/test_bbox_prompts.py:270` |
+| 2 | Box copy errors raise before any write | `tests/test_unit/test_bbox_prompts.py:317` |
+| 3 | Copied measuring code matches script (PR #298) | `tests/test_unit/test_mask_props.py:139` |
+| 3 | Known ellipse at π/4 gives expected values | `tests/test_unit/test_mask_props.py:169` |
+| 3 | Measured frames = frames SAM2 is prompted on | `tests/test_unit/test_mask_props.py:196` |
+| 3 | Only frames with finite `position` measured | `tests/test_unit/test_mask_props.py:207` |
+| 3 | 8 variables: layout, codecs, values | `tests/test_unit/test_mask_props.py:241` |
+| 3 | Values land at right individual, any `label_of` | `tests/test_unit/test_mask_props.py:318` |
+| 3 | Bad inputs raise before any write | `tests/test_unit/test_mask_props.py:351` |
+| 3 | Existing vars raise unless `overwrite=True` | `tests/test_unit/test_mask_props.py:371` |
+| 3 | README snippet for old stores works | `tests/test_unit/test_mask_props.py:398` |
+| 4 | Labels chunks, shards, transpose, zstd 15 | `tests/test_unit/test_mask_video.py:221` (asserts `:242-248`) |
+| 4 | Labels written per frame, any batch size (renamed) | `tests/test_unit/test_mask_video.py:269` |
+| 4 | `main`: masks match trajectories per frame | `tests/test_unit/test_mask_video.py:406` |
+| 4 | Separate runs share one store | `tests/test_unit/test_mask_video.py:526` |
+| 4 | Bad inputs raise before SAM2 loads (unchanged, not in the diff) | `tests/test_unit/test_mask_video.py:508` |
+| 4 | Consolidated metadata lists new arrays | `tests/test_unit/test_mask_video.py:587` |
+| 4 | `--no_consolidate` leaves root unconsolidated | `tests/test_unit/test_mask_video.py:614` |
+| 4 | Short clip video raises | `tests/test_unit/test_mask_video.py:632` |
+| 4 | `mask_config` attr holds run values | `tests/test_unit/test_mask_video.py:652` |
+| 4 | Bad config file raises before SAM2 loads | `tests/test_unit/test_mask_video.py:695` |
+| 4 | Works on store with stale consolidated root | `tests/test_unit/test_mask_video.py:718` |
 
 ## Not tested (by grep of `tests/`)
 

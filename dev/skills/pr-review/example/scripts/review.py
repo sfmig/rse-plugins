@@ -3,6 +3,7 @@
 
   review.py atomic [N|SHA] [--pass N]   one atomic commit at a time, from commit N (or SHA)
   review.py sessions [N]   [--pass N]   the session plan in 2-review/2-difit.md, from session N
+  review.py tests [N]      [--pass N]   the test steps in 2-review/3-tests.md, from step N
   review.py all            [--pass N]   the whole PR, like GitHub's "Files changed"
 
 A review page opens in the browser: the items on the left, the chosen one in difit.
@@ -28,15 +29,18 @@ import webbrowser
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 from urllib.request import urlopen
 
 from atomic import Branches, git, git_ok
 from comments import Pass, TipLines, content, difit_comments
+from links import PREFIX as LINK, test_links
 
 PACKAGE = Path(__file__).resolve().parent.parent  # pr-review/
 COMMENTS = PACKAGE / "comments"
 QUESTIONS = PACKAGE / "2-review" / "questions.json"
 SESSIONS = PACKAGE / "2-review" / "2-difit.md"  # the session plan table
+TESTS = PACKAGE / "2-review" / "3-tests.md"  # the test steps table
 COMMIT_LIST = (
     PACKAGE / "2-review" / "1-atomic-branch.md"
 )  # the atomic commits table, with weights
@@ -46,15 +50,17 @@ PAGE = Path(__file__).resolve().parent / "page.html"
 # ------------------------------------------------------------------ items
 @dataclass
 class Item:
-    """One thing to review: an atomic commit, a session, or the whole PR."""
+    """One thing to review: an atomic commit, a session, a test step, or the whole PR."""
 
-    name: str  # e.g. atomic-05-501a731, sessions-02, all
+    name: str  # e.g. atomic-05-501a731, sessions-02, tests-03, all
     title: str
     args: list  # what difit shows: a commit, two revisions, or "-" (a diff on stdin)
     sha: str = None  # atomic commit
     files: set = None  # the files of a session (None: all files)
     detail: str = ""  # the rest of the commit message
     weight: str = None  # high, med or low (atomic commits)
+    step: int = None  # the step number (tests mode)
+    links: list = field(default_factory=list)  # test <-> function links (tests mode)
     diff: str = field(
         default=None, repr=False
     )  # the diff of a session, sent on stdin
@@ -126,6 +132,71 @@ def session_items(b):
     return items
 
 
+def test_items(b, edit_url=None):
+    """One item per row of the test steps table: | Step | Behaviour | Files | Done |.
+    The diff shows each changed function in full, so a test and the code it tests
+    are read whole, and each test links to the functions it calls (links.py)."""
+    rows = [
+        r
+        for r in TESTS.read_text().splitlines()
+        if re.match(r"^\|.*\| *\[[ x]\] *\|$", r)
+    ]
+    items = []
+    for row in rows:
+        step, title, paths = (c.strip() for c in row.strip("|").split("|")[:3])
+        files = [
+            p
+            for p in re.findall(r"`([^`]*)`", paths)
+            if git_ok("cat-file", "-e", f"{b.base}:{p}")
+            or git_ok("cat-file", "-e", f"{b.branch}:{p}")
+        ]
+        n = int(step)
+        diff = (
+            git("diff", "-M", "--function-context", b.base, b.branch, "--", *files)
+            + "\n"
+        )
+        items.append(
+            Item(
+                f"tests-{n:02d}",
+                title.replace("`", ""),
+                ["-"],
+                files=set(files),
+                detail="\n".join(files),
+                step=n,
+                links=test_links(diff, files, b.branch, edit_url),
+                diff=diff,
+            )
+        )
+    return items
+
+
+def first_changes(diff):
+    """[(path, first changed line on the new side)] of a diff, for files the PR keeps."""
+    out, path, new = [], None, 0
+    for row in diff.splitlines():
+        if row.startswith("+++ "):
+            path = row[6:] if row.startswith("+++ b/") else None  # None: a deleted file
+        elif row.startswith("@@"):
+            new = int(re.match(r"@@ -\S+ \+(\d+)", row)[1])
+        elif path and row[:1] in ("+", "-") and not row.startswith(("+++", "---")):
+            out.append((path, max(new, 1)))
+            path = None  # first change only
+        elif path and row[:1] == " ":
+            new += 1
+    return out
+
+
+def files_of(item):
+    """The files of an item, each with its first changed line (for the editor list)."""
+    if item.diff:
+        diff = item.diff
+    elif item.sha:
+        diff = git("diff", "-U0", f"{item.sha}^", item.sha)
+    else:  # the whole PR: args are [branch, base]
+        diff = git("diff", "-U0", "-M", item.args[1], item.args[0])
+    return [{"file": p, "line": n} for p, n in first_changes(diff)]
+
+
 # ------------------------------------------------------------------ difit
 def free_port():
     with socket.socket() as s:
@@ -143,6 +214,7 @@ class Difit:
             t["id"]: content(t["messages"]) for t, _ in shown
         }  # to see what changes
         imports = [c for t, place in shown for c in difit_comments(t, place)]
+        imports += item.links  # not saved: Review.save leaves them out
         self.url = f"http://localhost:{free_port()}"
         args = [
             "difit",
@@ -207,12 +279,13 @@ class Review:
         self.lock = threading.Lock()
 
     def open(self, i):
+        """Show item i in difit; return difit's url and the item's files."""
         with self.lock:
-            if self.shown and self.shown[0] is self.items[i]:
-                return self.shown[1].url
-            self.close()
-            self.shown = (self.items[i], Difit(self.items[i], self.comments))
-            return self.shown[1].url
+            item = self.items[i]
+            if not (self.shown and self.shown[0] is item):
+                self.close()
+                self.shown = (item, Difit(item, self.comments))
+            return {"url": self.shown[1].url, "files": files_of(item)}
 
     def save(self):
         """Save what changed in the difit on screen."""
@@ -221,6 +294,7 @@ class Review:
         item, difit = self.shown
         now = difit.threads()
         if now is not None:
+            now = [d for d in now if not d["id"].startswith(LINK)]
             self.comments.apply(item.sha, item.name, difit.before, now)
             difit.before = {d["id"]: content(d["messages"]) for d in now}
 
@@ -262,6 +336,7 @@ class Review:
                     "detail": it.detail,
                     "weight": it.weight,
                     "sha": it.sha,
+                    "step": it.step,
                     "threads": len(self.comments.shown_on(it.sha, it.files)),
                 }
                 for it in self.items
@@ -269,8 +344,32 @@ class Review:
         }
 
 
-def serve(review, stopped):
-    """The page's server: GET / (the page), GET /api/state, POST /api/open/N, POST /api/stop."""
+def open_in_editor(path, line):
+    """Open a file of the repo at a line, with the editor set in difit's settings
+    (~/.difit/config.json), else VS Code. Errors are printed: the reply is always 204."""
+    if not git_ok("ls-files", "--error-unmatch", "--", path):  # only files of the repo
+        print(f"Not a file of the repo: {path}")
+        return
+    config = Path(os.environ.get("DIFIT_CONFIG_DIR") or Path.home() / ".difit") / "config.json"
+    try:
+        chosen = json.loads(config.read_text())["client"]["appearance"]["editor"]
+        command, template = chosen["command"], chosen["argsTemplate"]
+    except (OSError, ValueError, KeyError, TypeError):
+        command, template = "code", "-g %file:%line"
+    args = [
+        a.replace("%file", str(Path(path).resolve())).replace("%line", str(line))
+        for a in template.split()
+    ]
+    try:
+        subprocess.Popen([command, *args], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except OSError as e:
+        print(f"Could not open the editor ({command}): {e}")
+
+
+def serve(review, stopped, port):
+    """The page's server: GET / (the page), GET /api/state, POST /api/open/N, POST /api/stop,
+    GET /api/edit?file=F&line=L (opens the editor; linked from difit's comments, so it
+    answers 204 No Content, which leaves difit's page where it is)."""
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):
@@ -293,6 +392,12 @@ def serve(review, stopped):
             elif self.path == "/api/state":
                 with review.lock:
                     self.reply(review.state())
+            elif self.path.startswith("/api/edit?"):
+                query = parse_qs(urlsplit(self.path).query)
+                file, line = query.get("file", [""])[0], query.get("line", ["1"])[0]
+                open_in_editor(file, int(line) if line.isdigit() else 1)
+                self.send_response(204)
+                self.end_headers()
             else:
                 self.reply({"error": "not found"}, code=404)
 
@@ -300,7 +405,7 @@ def serve(review, stopped):
             m = re.fullmatch(r"/api/open/(\d+)", self.path)
             if m:
                 try:
-                    self.reply({"url": review.open(int(m.group(1)))})
+                    self.reply(review.open(int(m.group(1))))
                 except RuntimeError as e:
                     self.reply({"error": str(e)}, code=500)
             elif self.path == "/api/stop":
@@ -309,7 +414,7 @@ def serve(review, stopped):
             else:
                 self.reply({"error": "not found"}, code=404)
 
-    httpd = ThreadingHTTPServer(("localhost", free_port()), Handler)
+    httpd = ThreadingHTTPServer(("localhost", port), Handler)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     return httpd
 
@@ -346,7 +451,7 @@ def start_index(start, items):
 
 def main():
     p = argparse.ArgumentParser(usage=__doc__, add_help=False)
-    p.add_argument("mode", choices=["atomic", "sessions", "all"])
+    p.add_argument("mode", choices=["atomic", "sessions", "tests", "all"])
     p.add_argument("start", nargs="?")
     p.add_argument("--pass", dest="pass_no", type=int)
     args = p.parse_args()
@@ -387,9 +492,12 @@ def main():
         ]
         comments.add_questions(json.loads(QUESTIONS.read_text()), earlier)
 
+    port = free_port()  # the page's, known before the items: tests mode links to it
     items = {
         "atomic": atomic_items,
         "sessions": session_items,
+        # no "http:": difit opens http links in a new tab, others in the same frame
+        "tests": lambda b: test_items(b, f"//localhost:{port}/api/edit"),
         "all": lambda b: [Item("all", "Whole PR", [b.branch, b.base])],
     }[args.mode](b)
     review = Review(
@@ -399,7 +507,7 @@ def main():
     stopped = threading.Event()
     signal.signal(signal.SIGINT, lambda *_: stopped.set())
     signal.signal(signal.SIGTERM, lambda *_: stopped.set())
-    httpd = serve(review, stopped)
+    httpd = serve(review, stopped, port)
     url = f"http://localhost:{httpd.server_address[1]}/"
     print(
         f"Pass {pass_no}: {comments.path.relative_to(PACKAGE.parent)}\nReview page: {url}\n"
