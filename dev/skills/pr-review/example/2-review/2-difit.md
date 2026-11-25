@@ -31,7 +31,7 @@ We support four possible workflows to review the files:
     * `pr-review/scripts/review.py tests`
     * Shows the tests one behaviour at a time, with the code they test, and links between each test and the functions it calls. The steps come from the table in `2-review/3-tests.md`.
 
-To res**ume from a given item, add its number (or a commit hash in atomic mode):
+To **resume** from a given item, add its number (or a commit hash in atomic mode):
 
 * E.g. `pr-review/scripts/review.py sessions 5` starts at the 5th row of the session table (`tests 3` starts at step 3).
 * E.g. `pr-review/scripts/review.py atomic 501a731` starts at commit 501a731.
@@ -45,9 +45,8 @@ To res**ume from a given item, add its number (or a commit hash in atomic mode):
 
 * The bar above the diff has **Prev** / **Next** buttons (or <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>Alt</kbd>+<kbd>↓</kbd>). 
     * In commit-by-commit mode it also shows the commit's subject line (hover it for the full message).
-* The sidebar's collapsible **✎ Open in editor** lists the files of the item on screen. Click one to open it in your editor (the one set in difit's settings) at its first changed line. difit's own "Open in editor" is missing in session and tests modes.
+* The sidebar's collapsible **✎ Open in editor** lists the files of the item on screen. Click one to open it in your editor.
 * To stop the review, use the page's **Stop review** button or `CTRL+C` in the terminal.
-    * The comments are saved first.
 
 ## Comments
 
