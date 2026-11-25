@@ -6,6 +6,8 @@
 
 **With this PR**: the masks store now also holds the bounding boxes used as prompts, and 8 shape parameters (from the ellipse fitted to each mask) for every frame. These use the same `(clip_id, time, individual)` dimensions as the trajectories store. Cluster runs also use less disk space, stop with an error on bad video inputs, and save their config inside the store (`attrs.mask_config`).
 
+
+## Diagrams 
 <details>
 <summary><b>Components before and after</b></summary>
 

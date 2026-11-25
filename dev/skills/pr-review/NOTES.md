@@ -155,6 +155,7 @@ Rows 12–14 and 22–29 describe the first, bash difit runner; it was replaced 
 | 61 | (found while building 58) Preloaded questions go stale as the PR moves on | Re-anchored each question at the tip, checked with `sed -n`; dropped those that later commits settled (5 of 10) |
 | 62 | Flags to include the tests in the code review, and to leave out the preloaded questions | `--with-tests` (code modes only; tests-only commits come back in atomic mode; comments stay in `comments/code/`; sessions show only test files listed in the table) and `--no-questions` (both reviews; questions already in a reopened pass stay). `tests --with-tests` exits with an error |
 | 63 | No list of section links at the top of a file; show the sections below the first one collapsed | Minimal layout: each file's first `##` section stays open, each later one is a `<details>` with a bold `<summary>` (no `##` heading, no back-to-top link; replaces rows 19–20 there). Links to a section became its name in italics, as a link cannot open a closed `<details>`. `mermaid.html` also draws on `toggle` (captured, as it does not bubble): diagrams in a closed `<details>` come out blank otherwise. `review.py` still reads the tables inside them |
+| 64 | Drop resuming from item N or a commit hash (row 23) | Minimal layout: removed the `start` argument, `start_index` and the page's `state.start`; the page opens the first item. The sidebar already opens any item in one click and greys out the ones opened in the pass, and comments are saved per pass. The rule had grown fiddly: digits vs hash, and the numbers of skipped test-only commits. `Item.number` kept for the sidebar |
 
 ## Quarto support (to add to the skill)
 
@@ -197,10 +198,11 @@ Gotchas:
 Rewritten 2026-11-24 (feedback 30–44); tests mode and editor links added 2026-11-25 (feedback 45–56). Example: `example/scripts/`, about 1,250 lines in 5 files.
 
 ```
-review.py atomic [N|SHA] [--pass N]   code review: one atomic commit at a time
-review.py sessions [N]   [--pass N]   code review: rows of the session table
-review.py all            [--pass N]   code review: base..branch, like "Files changed"
-review.py tests [N]      [--pass N]   tests review: the test steps of 3-tests.md (feedback 45–51)
+review.py atomic   [--pass N]   code review: one atomic commit at a time
+review.py sessions [--pass N]   code review: rows of the session table
+review.py all      [--pass N]   code review: base..branch, like "Files changed"
+review.py tests    [--pass N]   tests review: the test steps of 3-tests.md (feedback 45–51)
+(full layout only: a start item, [N|SHA] or [N], dropped in the minimal layout, feedback 64)
 atomic.py extend                      add the PR branch's new commits to the atomic branch
 
 options: --with-tests (code review: show test files too), --no-questions (no preloaded questions)

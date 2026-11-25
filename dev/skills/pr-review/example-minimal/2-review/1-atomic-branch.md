@@ -16,8 +16,7 @@
 
 </details>
 
-<details>
-<summary><b>Scratch branch: atomic</b></summary>
+## Scratch branch: atomic
 
 * Local branch `smg/add-ellipse-params-to-tracks-atomic`. 
 * Not pushed. 
@@ -31,13 +30,10 @@
 # To check same final code as the original branch: this should return empty output
 git diff smg/add-ellipse-params-to-tracks smg/add-ellipse-params-to-tracks-atomic
 ```
-
 </details>
 
-</details>
+### List of commits
 
-<details>
-<summary><b>List of commits</b></summary>
 To list the atomic commits, oldest first
 ```bash
 git log --reverse --oneline d005d99..smg/add-ellipse-params-to-tracks-atomic
@@ -64,10 +60,7 @@ git log --reverse --oneline d005d99..smg/add-ellipse-params-to-tracks-atomic
 
 Commits with only test files (12–15 here) are left out of the code review (tab *Review code with difit*); their files are in the tests review (tab *Review tests with difit*). A commit with both shows only its code files in the code review.
 
-</details>
-
-<details>
-<summary><b>Extending the atomic branch</b></summary>
+### Extending the atomic branch
 
 If commits are added to the PR branch after the atomic branch was built, add them to the end of the atomic branch with:
 
@@ -77,14 +70,10 @@ pr-review-minimal/scripts/atomic.py extend
 
 It looks for the commit on the PR branch that has the same files as the atomic tip, and replays the commits after it. If the PR branch was rebased or amended, there is no matching commit, in that case it stops and you can ask the agent to rebuild the atomic branch instead.
 
-</details>
-
-<details>
-<summary><b>Limits</b></summary>
+### Limits
 
 - Only the final tree is checked equal. Middle commits were not run.
 - Tests come after code, so commits 5–11 may fail old tests.
 - Comments were not stripped. That would make the diff non-empty.
 - Built with `/private/tmp/claude-501/-Users-sofia-arc-project-Zoo-crabs-crabs-exploration/a9bea622-a385-4e05-b355-6934d0117455/scratchpad/build_stages.py`.
 
-</details>

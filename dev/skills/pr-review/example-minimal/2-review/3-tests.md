@@ -1,6 +1,6 @@
 # Review tests with difit
 
-The second part of the review: the test files, each step with the code it tests. Same review page and comment rules as in *Review code with difit*.
+Same review page and comment rules as in *Review code with difit*.
 
 ## Review steps
 
@@ -10,9 +10,7 @@ To show one step at a time, run:
 pr-review-minimal/scripts/review.py tests
 ```
 
-* Each step shows its files in full functions (`git diff --function-context`), so each test is read whole. Switch files in `difit`'s file list.
 * Each changed test has a 🔗 comment on its `def` line that jumps to the functions it calls, and each of those functions links back to its tests. These links are not saved.
-* To resume, add the step number: `pr-review-minimal/scripts/review.py tests 3`.
 
 `review.py` reads the files from the *Files* column. Edit the table to regroup the tests. If a changed test file is in no step, `review.py` prints it.
 

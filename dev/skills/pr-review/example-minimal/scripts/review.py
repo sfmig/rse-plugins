@@ -4,19 +4,19 @@
 Two reviews, each with its own passes and preloaded questions:
 
   code review: the PR without its test files (atomic.is_test)
-    review.py atomic [N|SHA]   one atomic commit at a time, from commit N (or SHA)
-    review.py sessions [N]     the session plan in 2-review/2-code.md, from session N
-    review.py all              the whole PR, like GitHub's "Files changed"
+    review.py atomic     one atomic commit at a time
+    review.py sessions   the session plan in 2-review/2-code.md
+    review.py all        the whole PR, like GitHub's "Files changed"
 
   tests review: the test files, with the code they test
-    review.py tests [N]        the test steps in 2-review/3-tests.md, from step N
+    review.py tests      the test steps in 2-review/3-tests.md
 
 Options:
   --pass N         add to pass N, instead of starting a new pass
   --with-tests     code review only: show the test files too (comments stay in the code review)
   --no-questions   do not add the preloaded questions to the pass
 
-A review page opens in the browser: the items on the left, the chosen one in difit.
+A review page opens in the browser: the items on the left (click one to open it), the chosen one in difit.
 Each run starts a new pass of its review, saved in comments/<code|tests>/pass-N/comments.json.
 Stop with the page's Stop button or Ctrl+C.
 
@@ -334,14 +334,13 @@ class Difit:
 class Review:
     """The items, the pass, and the one difit server showing the chosen item."""
 
-    def __init__(self, review, mode, items, comments, pass_no, start):
-        self.review, self.mode, self.items, self.comments, self.pass_no, self.start = (
+    def __init__(self, review, mode, items, comments, pass_no):
+        self.review, self.mode, self.items, self.comments, self.pass_no = (
             review,
             mode,
             items,
             comments,
             pass_no,
-            start,
         )
         self.shown = None  # (item, Difit) on screen
         self.lock = threading.Lock()
@@ -393,7 +392,6 @@ class Review:
             "review": self.review,
             "mode": self.mode,
             "pass": self.pass_no,
-            "start": self.start,
             "others": others,
             "othersTitle": "Only on the whole PR"
             if atomic
@@ -497,31 +495,10 @@ def passes(folder):
     }
 
 
-def start_index(start, items):
-    """Item number N (as in the package's tables), or an atomic commit's hash, as an index."""
-    if not start:
-        return 0
-    if start.isdigit() and len(start) < 7:
-        i = next((n for n, it in enumerate(items) if it.number == int(start)), -1)
-    else:
-        full = git(
-            "rev-parse",
-            "--verify",
-            "--quiet",
-            f"{start}^{{commit}}",
-            check=False,
-        )
-        i = next((n for n, it in enumerate(items) if it.sha == full), -1)
-    if not 0 <= i < len(items):
-        numbers = ", ".join(str(it.number) for it in items)
-        sys.exit(f"No item {start}. Items: {numbers}")
-    return i
-
 
 def main():
     p = argparse.ArgumentParser(usage=__doc__, add_help=False)
     p.add_argument("mode", choices=["atomic", "sessions", "tests", "all"])
-    p.add_argument("start", nargs="?")
     p.add_argument("--pass", dest="pass_no", type=int)
     p.add_argument("--with-tests", action="store_true")
     p.add_argument("--no-questions", action="store_true")
@@ -581,7 +558,7 @@ def main():
             "all": lambda b, t: [whole_pr_item(b, t)],
         }[args.mode](b, args.with_tests)
     review = Review(
-        review, args.mode, items, comments, pass_no, start_index(args.start, items)
+        review, args.mode, items, comments, pass_no
     )
 
     stopped = threading.Event()

@@ -248,7 +248,7 @@ document.addEventListener("keydown", (e) => {
 setSidebar(localStorage.getItem("pr-review-nosidebar") === "1");
 (async () => {
   await refresh();
-  if (state) show(state.start);
+  if (state) show(0);
   setInterval(refresh, 3000);
 })();
 </script>

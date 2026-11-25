@@ -1,10 +1,12 @@
 # Review code with difit
 
-The review is in two parts, each with its own comments:
+The review is split in two parts:
 
-1. **Code review** (this tab): the PR without its test files.
+1. **Code review** (this tab): the PR without the test files.
 2. **Tests review** (tab *Review tests with difit*): the test files, next to the code they test.
 
+
+## Quickstart 
 
 [`difit`](https://yoshiko-pg.github.io/difit/) shows a GitHub-style diff in the browser, from local git. **Install** it once:
 
@@ -12,22 +14,30 @@ The review is in two parts, each with its own comments:
 npm i -g difit@5.0.12
 ```
 
+Then, run the **helper script**:
+
+```bash
+pr-review-minimal/scripts/review.py [all | atomic | sessions]
+```
+
 ## Workflows
 
-Three ways to go through the code. By default none of them shows the test files: a file in a `tests/` folder, or named `test_*.py`, `*_test.py` or `conftest.py`.
+Three ways to go through the code. 
 
-| Workflow | Command | Shows |
+
+
+|  | CLI argument | Shows |
 |---|---|---|
-| Whole PR | `pr-review-minimal/scripts/review.py all` | The PR's diff from where it split off `main`, like GitHub's "Files changed" |
-| Commit by commit | `pr-review-minimal/scripts/review.py atomic` | One atomic commit at a time. Commits with only tests are skipped |
-| By session | `pr-review-minimal/scripts/review.py sessions` | One row of the *Session plan table* below at a time |
+| **Whole PR** | `all` | The PR's diff from where it split off `main`, like GitHub's "Files changed" |
+| **Commit by commit** | `atomic` | One atomic commit at a time. Commits with only tests are skipped |
+| **By session** | `sessions` | One row of the *Session plan table* below at a time |
 
-To **resume** from an item, add its number from the tables, or a commit hash in atomic mode:
-
-* `pr-review-minimal/scripts/review.py sessions 3` starts at session 3.
-* `pr-review-minimal/scripts/review.py atomic 501a731` starts at that commit. A short hash of only digits is read as a number: give a longer hash.
+By default none of them shows the test files, that is:
+* a file in a `tests/` folder, 
+* or named `test_*.py`, `*_test.py` or `conftest.py`.
 
 To **include the test files**, add `--with-tests`, e.g. `pr-review-minimal/scripts/review.py all --with-tests`. Comments written on them stay in the code review. In session mode, only test files listed in the *Session plan table* are shown.
+
 
 <details>
 <summary><b>Review page</b></summary>
@@ -58,9 +68,10 @@ To **include the test files**, add `--with-tests`, e.g. `pr-review-minimal/scrip
 <summary><b>Review passes</b></summary>
 
 * Each run starts a new **pass** of the code review, saved to `pr-review-minimal/comments/code/pass-N/comments.json`.
-* To add comments to an earlier pass, use `--pass N`, e.g. `pr-review-minimal/scripts/review.py atomic 7 --pass 2`.
+* To add comments to an earlier pass, use `--pass N`, e.g. `pr-review-minimal/scripts/review.py atomic --pass 2`.
 * The preloaded questions (`2-review/questions-code.json`) are added to each new pass, except the ones an earlier pass resolved or deleted. To leave them out, add `--no-questions`. Questions already in a pass you reopen with `--pass N` stay.
 * The tests review has its own passes, in `comments/tests/`.
+* To go on where you stopped, click the item in the sidebar: items already opened in the pass are greyed out.
 
 </details>
 
@@ -79,7 +90,7 @@ If commits are added to the PR branch after the atomic branch was built, `review
 
 </details>
 
-<details>
+<details open>
 <summary><b>Session plan table</b></summary>
 
 When reviewing **by session**, `review.py` reads the files from this table. Edit it to regroup the files. Test files in it are shown only with `--with-tests`.
