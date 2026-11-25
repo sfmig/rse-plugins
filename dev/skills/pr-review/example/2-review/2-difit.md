@@ -1,8 +1,18 @@
-# Review files with difit
+# Review with difit
 
 [`difit`](https://yoshiko-pg.github.io/difit/) shows a GitHub-style diff in the browser, from local git. 
 
-First, install `difit` (once only) with: `npm i -g difit@5.0.12`. Then, run the generated script, `pr-review/scripts/review.py`.
+First, **install** `difit` (once only) with: 
+
+```bash
+npm i -g difit@5.0.12
+``` 
+
+Then, run the **helper script**:
+
+```bash
+pr-review/scripts/review.py
+```
 
 ## Workflows
 
@@ -18,7 +28,7 @@ We support three possible workflows to review the files:
     * `pr-review/scripts/review.py sessions` 
     * Shows one session at a time. The sessions come from the table in [Session plan](#session-plan-table), so you can regroup files by editing the table directly.
 
-To resume from a given item, add its number (or a commit hash in atomic mode):
+To res**ume from a given item, add its number (or a commit hash in atomic mode):
 
 * E.g. `pr-review/scripts/review.py sessions 5` starts at the 5th row of the session table.
 * E.g. `pr-review/scripts/review.py atomic 501a731` starts at commit 501a731.
@@ -44,7 +54,7 @@ To resume from a given item, add its number (or a commit hash in atomic mode):
 * **Resolving** a thread in `difit` moves it to the `resolved` list. Resolved threads are not loaded again.
     * "Delete all comments" in `difit`'s menu counts as resolving every thread. 
 * To **delete** a thread, reply `delete` or edit its first message to `delete`. The thread stays visible until you open another item. To undo, you can delete the `delete` reply.
-* The "viewed" checkboxes are not kept after reopening.
+* The **"viewed" checkboxes are not kept** after reopening.
 * Stop the review before editing `comments.json` by hand (or before asking an agent to). Otherwise the an automatic save can overwrite your edits.
 
 
@@ -55,6 +65,23 @@ To resume from a given item, add its number (or a commit hash in atomic mode):
     * e.g. `pr-review/scripts/review.py atomic 7 --pass 2`.
 * The AI-suggested questions ([Preloaded questions](#preloaded-questions)) are added to each new pass, except the ones an earlier pass resolved or deleted.
 
+## After the review
+
+When done with your comments, you can ask the agent to read the JSON file and address the comments and/or questions with replies. Example prompt:
+
+> Have a look at the comments from the PR review here. Answer the questions briefly, clarify ambiguous things and for suggested changes determine whether to accept them or not. Can you add your comments to the json as replies to a thread?
+
+Then you can review the answers by reloading `difit` for that pass. You can settle any open threads and resolve. Once you are happy, you can ask the agent to implement the suggestions. Example prompt:
+
+> Have a look at the comments in /pr-review/comments/pass-N/comments.json and implement anything that is resolved in `<original-branch>` with atomic commits
+
+You can optionally review the section on AI-specific red flags before finalising the review. 
+
+You can optionally delete the atomic branch when done too:  
+
+```bash
+git branch -D smg/add-ellipse-params-to-tracks-atomic
+```
 
 
 ## When the atomic branch is behind
@@ -91,20 +118,3 @@ Below are some AI-suggested questions. Each question only appears on the commit 
 | 9 | 300 s per read timeout: worst-case hang per job acceptable? | `crabs/utils/io.py:16` | 2 | 3 |
 | 10 | Labels chunk straddling two time slices decoded twice? | `crabs/mask/mask_props.py:153` | 10 | 4 |
 
-## After the review
-
-When done with your comments, you can ask the agent to read the JSON file and address the comments and/or questions with replies. Example prompt:
-
-> Have a look at the comments from the PR review here. Answer the questions briefly, clarify ambiguous things and for suggested changes determine whether to accept them or not. Can you add your comments to the json as replies to a thread?
-
-Then you can review the answers by reloading difit for that pass. You can settle any open threads and resolve. Once you are happy, you can ask the agent to implement the suggestions. Example prompt:
-
-> Have a look at the comments in /pr-review/comments/pass-N/comments.json and implement anything that is resolved in `<original-branch>` with atomic commits
-
-You can optionally review the section on AI-specific red flags before finalising the review. 
-
-You can optionally delete the atomic branch when done too:  
-
-```bash
-git branch -D smg/add-ellipse-params-to-tracks-atomic
-```

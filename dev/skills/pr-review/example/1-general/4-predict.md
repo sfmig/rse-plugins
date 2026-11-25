@@ -1,4 +1,4 @@
-# Predict (optional)
+# Predict
 
 Fill in "My sketch" before reading on. Then compare with "PR does". Rows marked "no": look at them first in the next section.
 

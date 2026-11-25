@@ -9,7 +9,6 @@ A review page opens in the browser: the items on the left, the chosen one in dif
 Each run starts a new pass, saved in comments/pass-N/comments.json; --pass N adds to
 pass N instead. Stop with the page's Stop button or Ctrl+C.
 
-Branches: see atomic.py. This script never changes a branch.
 Needs difit: npm i -g difit@5.0.12
 """
 

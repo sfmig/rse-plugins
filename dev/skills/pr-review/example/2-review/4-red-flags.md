@@ -1,4 +1,4 @@
-# AI-specific red flags
+# AI red flags
 
 ## CI changes
 

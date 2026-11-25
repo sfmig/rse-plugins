@@ -25,7 +25,7 @@ Do not judge quality; I will. Produce:
 5. 10 skeptical questions with file:line
 ```
 
-### Output: a `pr-review/` folder in the reviewed repo, 3 blocks
+### Output: a `pr-review/` folder in the reviewed repo, 2 blocks and `scripts/`
 
 Revised after feedback (2026-11-20). First draft had 14 flat files; the user cut it to these.
 
@@ -38,8 +38,8 @@ Revised after feedback (2026-11-20). First draft had 14 flat files; the user cut
 | 2. Review | `1-atomic-branch.md` | Original commits; atomic scratch branch table |
 | | `2-difit.md` | Two difit options, how comments are saved, session plan, preloaded questions |
 | | `questions.json` | Skeptical questions as difit comments |
-| | `3-red-flags.md` | AI-specific checks, read last |
-| 3. Tests | `1-tests.md` | Test plan table for difit; behaviours tested and not tested |
+| | `3-tests.md` | Test plan table for difit; behaviours tested and not tested (was block 3, `3-tests/1-tests.md`, until 2026-11-25) |
+| | `4-red-flags.md` | AI-specific checks, read last |
 | `scripts/` | `review.py` | Review page + difit, saves comments to `comments/pass-N/`; read-only on git |
 | | `comments.py` | Comments file of a pass; follows commit lines to the tip with `git blame` |
 | | `page.html` | The review page |

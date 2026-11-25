@@ -20,8 +20,8 @@
 
 * Local branch `smg/add-ellipse-params-to-tracks-atomic`. 
 * Not pushed. 
-* Zero diff with the original branch up to `1b9c04f`, the commit whose files match the atomic tip. New commits on the original branch make it stale: see "Keep it up to date".
-* Commits ordered by: plumbing → core → wiring → tests → docs.
+* Zero diff with the original branch up to `1b9c04f`, the commit whose files match the atomic tip.
+* New commits on the original branch make the atomic branch stale: see [Extending the atomic branch](#extend-atomic-branch).
 
 <details>
 <summary>Check zero diff</summary>
@@ -39,9 +39,6 @@ To list the atomic commits, oldest first
 ```bash
 git log --reverse --oneline d005d99..smg/add-ellipse-params-to-tracks-atomic
 ```
-
-
-Weight rule: 🔴 **high** = changes data written to the store; 🟠 **med** = changes run behaviour; 🟢 **low** = deps, tests, docs, logging.
 
 | # | Commit | Purpose | Files | +/- | Weight |
 |---|---|---|---|---|---|
@@ -62,17 +59,15 @@ Weight rule: 🔴 **high** = changes data written to the store; 🟠 **med** = c
 | 15 | `b493975` | Tests: `mask_video` | `test_mask_video.py` | +198/-22 | 🟢 low |
 | 16 | `a70f978` | Docs: README and HPC guide | `README.md`, `MaskTrackedCrabsHPC.md` | +65/-12 | 🟢 low |
 
-## Keep it up to date
+## Extending the atomic branch
 
-If commits are added to the PR branch after the atomic branch was built, add them to the end of the atomic branch, with the same message, author and date:
+If commits are added to the PR branch after the atomic branch was built, add them to the end of the atomic branch with:
 
 ```bash
 pr-review/scripts/atomic.py extend
 ```
 
-It looks for the commit on the PR branch that has the same files as the atomic tip, and replays the commits after it. It prints the new commits and how to undo. If the PR branch was rebased or amended, there is no such commit, so it stops: ask the agent to rebuild the atomic branch instead.
-
-`atomic.py` is the only script that changes a branch; `review.py` only reads.
+It looks for the commit on the PR branch that has the same files as the atomic tip, and replays the commits after it. If the PR branch was rebased or amended, there is no matching commit, in that case it stops and you can ask the agent to rebuild the atomic branch instead.
 
 
 ## Limits

@@ -15,6 +15,8 @@ format:
     toc: false
     css: styles.css
     filters:
+      - at: pre-ast
+        path: tab-sections.lua
       - gh-alerts.lua
       - mermaid.lua
     include-after-body: mermaid.html

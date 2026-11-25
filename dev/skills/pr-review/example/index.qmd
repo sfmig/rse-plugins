@@ -2,15 +2,14 @@
 title: PR review
 ---
 
-<!-- Outer tabs: blocks. Inner tabs: each file's top heading (# ...). -->
+<!-- One row of tabs: each file's top heading (# ...) is a tab.
+     The {.section-...} divs colour the tabs by section (tab-sections.lua). -->
 
 <!-- "[↑ Back to top](#top)" in a .md file goes to the page top (title); no anchor needed -->
 
-::::: {.panel-tabset}
-
-# 1. General
-
 :::: {.panel-tabset}
+
+::: {.section-general}
 
 {{< include 1-general/1-aim.md >}}
 
@@ -20,26 +19,18 @@ title: PR review
 
 {{< include 1-general/4-predict.md >}}
 
-::::
+:::
 
-# 2. Review
-
-:::: {.panel-tabset}
+::: {.section-review}
 
 {{< include 2-review/1-atomic-branch.md >}}
 
 {{< include 2-review/2-difit.md >}}
 
-{{< include 2-review/3-red-flags.md >}}
+{{< include 2-review/3-tests.md >}}
+
+{{< include 2-review/4-red-flags.md >}}
+
+:::
 
 ::::
-
-# 3. Tests
-
-:::: {.panel-tabset}
-
-{{< include 3-tests/1-tests.md >}}
-
-::::
-
-:::::
