@@ -15,7 +15,7 @@ npm i -g difit@5.0.12
 ## Workflows
 [↑ Back to top](#top)
 
-Three ways to go through the code. None of them shows the test files: a file in a `tests/` folder, or named `test_*.py`, `*_test.py` or `conftest.py`.
+Three ways to go through the code. By default none of them shows the test files: a file in a `tests/` folder, or named `test_*.py`, `*_test.py` or `conftest.py`.
 
 | Workflow | Command | Shows |
 |---|---|---|
@@ -27,6 +27,8 @@ To **resume** from an item, add its number from the tables, or a commit hash in 
 
 * `pr-review-minimal/scripts/review.py sessions 3` starts at session 3.
 * `pr-review-minimal/scripts/review.py atomic 501a731` starts at that commit. A short hash of only digits is read as a number: give a longer hash.
+
+To **include the test files**, add `--with-tests`, e.g. `pr-review-minimal/scripts/review.py all --with-tests`. Comments written on them stay in the code review. In session mode, only test files listed in the [Session plan table](#session-plan-table) are shown.
 
 ## Review page
 [↑ Back to top](#top)
@@ -54,7 +56,7 @@ To **resume** from an item, add its number from the tables, or a commit hash in 
 
 * Each run starts a new **pass** of the code review, saved to `pr-review-minimal/comments/code/pass-N/comments.json`.
 * To add comments to an earlier pass, use `--pass N`, e.g. `pr-review-minimal/scripts/review.py atomic 7 --pass 2`.
-* The [Preloaded questions](#preloaded-questions) are added to each new pass, except the ones an earlier pass resolved or deleted.
+* The [Preloaded questions](#preloaded-questions) are added to each new pass, except the ones an earlier pass resolved or deleted. To leave them out, add `--no-questions`. Questions already in a pass you reopen with `--pass N` stay.
 * The tests review has its own passes, in `comments/tests/`.
 
 ## After the review
@@ -73,7 +75,7 @@ If commits are added to the PR branch after the atomic branch was built, `review
 ## Session plan table
 [↑ Back to top](#top)
 
-When reviewing **by session**, `review.py` reads the files from this table. Edit it to regroup the files. Test files in it are ignored.
+When reviewing **by session**, `review.py` reads the files from this table. Edit it to regroup the files. Test files in it are shown only with `--with-tests`.
 
 | Session | Files | Lines | Done |
 |---|---|---|---|

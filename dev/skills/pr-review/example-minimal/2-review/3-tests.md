@@ -33,7 +33,7 @@ pr-review-minimal/scripts/review.py tests
 ## Tests passes
 [↑ Back to top](#top)
 
-* Each run starts a new **pass** of the tests review, saved to `pr-review-minimal/comments/tests/pass-N/comments.json`. Add to an earlier pass with `--pass N`.
+* Each run starts a new **pass** of the tests review, saved to `pr-review-minimal/comments/tests/pass-N/comments.json`. Add to an earlier pass with `--pass N`. Leave out the [preloaded questions](#tests-questions) with `--no-questions`.
 * Comments here stay in the tests review, also those written on a source file of a step. They do not show in the code review.
 * The prompts in *Review code with difit* → *After the review* work here too, with `comments/tests/`.
 

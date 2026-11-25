@@ -4,16 +4,21 @@
 Two reviews, each with its own passes and preloaded questions:
 
   code review: the PR without its test files (atomic.is_test)
-    review.py atomic [N|SHA] [--pass N]   one atomic commit at a time, from commit N (or SHA)
-    review.py sessions [N]   [--pass N]   the session plan in 2-review/2-code.md, from session N
-    review.py all            [--pass N]   the whole PR, like GitHub's "Files changed"
+    review.py atomic [N|SHA]   one atomic commit at a time, from commit N (or SHA)
+    review.py sessions [N]     the session plan in 2-review/2-code.md, from session N
+    review.py all              the whole PR, like GitHub's "Files changed"
 
   tests review: the test files, with the code they test
-    review.py tests [N]      [--pass N]   the test steps in 2-review/3-tests.md, from step N
+    review.py tests [N]        the test steps in 2-review/3-tests.md, from step N
+
+Options:
+  --pass N         add to pass N, instead of starting a new pass
+  --with-tests     code review only: show the test files too (comments stay in the code review)
+  --no-questions   do not add the preloaded questions to the pass
 
 A review page opens in the browser: the items on the left, the chosen one in difit.
-Each run starts a new pass of its review, saved in comments/<code|tests>/pass-N/comments.json;
---pass N adds to pass N instead. Stop with the page's Stop button or Ctrl+C.
+Each run starts a new pass of its review, saved in comments/<code|tests>/pass-N/comments.json.
+Stop with the page's Stop button or Ctrl+C.
 
 Needs difit: npm i -g difit@5.0.12
 """
@@ -82,13 +87,13 @@ def weights():
     return {m.group(1): m.group(2) for m in found if m}
 
 
-def atomic_items(b):
+def atomic_items(b, with_tests=False):
     w = weights()
     items = []
     for n, sha in enumerate(
         git("rev-list", "--reverse", f"{b.base}..{b.atomic}").split(), 1
     ):
-        files = code_files(f"{sha}^", sha)
+        files = code_files(f"{sha}^", sha, with_tests)
         if not files:  # a commit of tests only: in the tests review
             continue
         message = [
@@ -121,9 +126,9 @@ def changed_files(a, b):
     ]
 
 
-def code_files(a, b):
-    """The paths the diff a..b touches, without the test files."""
-    return [p for p in changed_files(a, b) if not is_test(p)]
+def code_files(a, b, with_tests=False):
+    """The paths the diff a..b touches, without the test files (unless with_tests)."""
+    return [p for p in changed_files(a, b) if with_tests or not is_test(p)]
 
 
 def diff_of(a, b, files, *options):
@@ -161,13 +166,14 @@ def only(files, rev, base):
     return (commit, base_sha)
 
 
-def whole_pr_item(b):
-    files = code_files(b.base, b.branch)
-    return Item("all", "Whole PR, without tests", 1, files=set(files),
+def whole_pr_item(b, with_tests=False):
+    files = code_files(b.base, b.branch, with_tests)
+    title = "Whole PR" if with_tests else "Whole PR, without tests"
+    return Item("all", title, 1, files=set(files),
                 revs=only(files, b.branch, b.base))
 
 
-def session_items(b):
+def session_items(b, with_tests=False):
     """One item per row of the session table (rows that end in a checkbox)."""
     rows = [
         r
@@ -179,7 +185,7 @@ def session_items(b):
         files = [
             p
             for p in re.findall(r"`([^`]*)`", row)
-            if not is_test(p)
+            if (with_tests or not is_test(p))
             and (
                 git_ok("cat-file", "-e", f"{b.base}:{p}")
                 or git_ok("cat-file", "-e", f"{b.branch}:{p}")
@@ -517,7 +523,11 @@ def main():
     p.add_argument("mode", choices=["atomic", "sessions", "tests", "all"])
     p.add_argument("start", nargs="?")
     p.add_argument("--pass", dest="pass_no", type=int)
+    p.add_argument("--with-tests", action="store_true")
+    p.add_argument("--no-questions", action="store_true")
     args = p.parse_args()
+    if args.with_tests and args.mode == "tests":
+        sys.exit("--with-tests is for the code review (atomic, sessions, all).")
     sys.stdout.reconfigure(
         line_buffering=True
     )  # print each line at once, also into a log
@@ -554,7 +564,7 @@ def main():
     )
     comments = Pass(folder / f"pass-{pass_no}" / "comments.json", tip_lines)
     questions = QUESTIONS / f"questions-{review}.json"
-    if questions.exists():
+    if questions.exists() and not args.no_questions:
         earlier = [
             Pass(path, None)
             for n, path in found.items()
@@ -562,12 +572,14 @@ def main():
         ]
         comments.add_questions(json.loads(questions.read_text()), earlier)
 
-    items = {
-        "atomic": atomic_items,
-        "sessions": session_items,
-        "tests": test_items,
-        "all": lambda b: [whole_pr_item(b)],
-    }[args.mode](b)
+    if args.mode == "tests":
+        items = test_items(b)
+    else:
+        items = {
+            "atomic": atomic_items,
+            "sessions": session_items,
+            "all": lambda b, t: [whole_pr_item(b, t)],
+        }[args.mode](b, args.with_tests)
     review = Review(
         review, args.mode, items, comments, pass_no, start_index(args.start, items)
     )

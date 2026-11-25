@@ -153,6 +153,7 @@ Rows 12–14 and 22–29 describe the first, bash difit runner; it was replaced 
 | 59 | Leave the tests out of the first difit review; keep code comments and test comments apart, as two reviews with their own passes (reverses row 55) | Code modes (`all`, `atomic`, `sessions`) never show a test file; `tests` mode is the tests review. Passes in `comments/code/` and `comments/tests/`, numbered apart; questions split into `questions-code.json` and `questions-tests.json`. A comment written on a source file during the tests review stays in the tests review |
 | 60 | Keep difit's own "Open in editor" (lost when the test files were filtered out with a diff on stdin) | difit's git mode has no path filter, so `review.py` makes a commit object with the base's files plus only the item's files (temporary index, `commit-tree`; no ref changed) and passes `<commit> <base>`. Used for sessions, the whole PR and atomic commits with test files; checked: same diff as `git diff -- files` for all 41 items, refs unchanged. Tests mode stays on stdin: its link ids come from the `--function-context` diff it sends |
 | 61 | (found while building 58) Preloaded questions go stale as the PR moves on | Re-anchored each question at the tip, checked with `sed -n`; dropped those that later commits settled (5 of 10) |
+| 62 | Flags to include the tests in the code review, and to leave out the preloaded questions | `--with-tests` (code modes only; tests-only commits come back in atomic mode; comments stay in `comments/code/`; sessions show only test files listed in the table) and `--no-questions` (both reviews; questions already in a reopened pass stay). `tests --with-tests` exits with an error |
 
 ## Quarto support (to add to the skill)
 
@@ -200,6 +201,8 @@ review.py sessions [N]   [--pass N]   code review: rows of the session table
 review.py all            [--pass N]   code review: base..branch, like "Files changed"
 review.py tests [N]      [--pass N]   tests review: the test steps of 3-tests.md (feedback 45–51)
 atomic.py extend                      add the PR branch's new commits to the atomic branch
+
+options: --with-tests (code review: show test files too), --no-questions (no preloaded questions)
 ```
 
 How it works:
