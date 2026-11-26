@@ -41,7 +41,7 @@ The folder is ignored locally, so it is never committed.
 
 | File | Holds |
 |---|---|
-| `overview.md` | Before and after the PR, plus one diagram |
+| `overview.md` | Before and after the PR, plus one diagram. The review page opens on it |
 | `tests.md` | The steps of the tests review, with each file tagged `code:` or `test:`. The `test:` files are left out of the code review. Edit the tags to move a file between the two reviews |
 | `questions-code.json`, `questions-tests.json` | The preloaded questions |
 | `comments/` | One `comments.json` per pass |

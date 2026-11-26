@@ -74,6 +74,20 @@
   .frame { position: relative; flex: 1; }
   iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
   .status { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); white-space: pre-wrap; }
+  /* the overview: overview.md, shown first */
+  .pinned { padding: 6px 6px 2px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+  .pinned li { grid-template-columns: 18px 1fr; }
+  .pinned .icon { color: var(--muted); }
+  .overview { position: absolute; inset: 0; overflow: auto; padding: 24px 40px 60px; }
+  .overview article { max-width: 920px; font-size: 14px; line-height: 1.6; }
+  .overview h1 { font-size: 22px; margin: 0 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  .overview h2 { font-size: 17px; margin: 24px 0 8px; }
+  .overview a { color: var(--accent); }
+  .overview :not(pre) > code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+  .overview pre { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px; overflow: auto; }
+  .overview .mermaid { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  .overview table { border-collapse: collapse; } .overview th, .overview td { border: 1px solid var(--line); padding: 3px 8px; }
   .overlay { position: fixed; inset: 0; display: grid; place-items: center; font-size: 15px;
              background: color-mix(in srgb, var(--bg) 85%, transparent); }
 </style>
@@ -82,6 +96,7 @@
 <aside>
   <h1 id="heading">PR review</h1>
   <div class="scroll">
+    <ol class="pinned" id="pinned" hidden><li id="overview-item"><span class="icon">▤</span><span class="title">Overview</span></li></ol>
     <div class="label" id="items-label">Items</div>
     <div class="legend" id="legend" hidden>
       <span><i class="dot high"></i>high</span><span><i class="dot med"></i>med</span><span><i class="dot low"></i>low</span>
@@ -106,6 +121,7 @@
   <div class="frame">
     <div class="status" id="status"></div>
     <iframe id="difit" hidden></iframe>
+    <div class="overview" id="overview" hidden><article id="overview-text"></article></div>
   </div>
 </main>
 <div class="overlay" id="overlay" hidden>The review has stopped. Comments are saved. You can close this tab.</div>
@@ -113,7 +129,7 @@
 <script>
 const $ = (id) => document.getElementById(id);
 let state = null;     // from /api/state: review, mode, pass, items, others
-let current = -1;     // index of the item on screen
+let current = -1;     // index of the item on screen; -1: the overview
 
 async function api(path, method = "GET") {
   const r = await fetch(path, { method });
@@ -134,6 +150,8 @@ function render() {
   $("heading").textContent = `${state.review} review · ${state.mode} · pass ${state.pass}`;
   $("items-label").textContent = `${atomic ? "Commits" : tests ? "Steps" : "Items"} (${state.items.length})`;
   $("legend").hidden = !atomic;
+  $("pinned").hidden = !state.overview;
+  $("overview-item").className = current === -1 ? "on" : "";
 
   const done = seen();
   $("items").replaceChildren(...state.items.map((it, i) => {
@@ -166,21 +184,25 @@ function render() {
   const it = state.items[current];
   $("message").innerHTML = "";
   $("message").title = "";
-  if ((atomic || tests) && it) {
+  if (current === -1 && state.overview) {
+    $("message").innerHTML = `<span class="mono">overview.md</span><span>Overview</span>`;
+  } else if ((atomic || tests) && it) {
     $("message").innerHTML = `<span class="mono"></span><span></span>`;
     $("message").firstChild.textContent = atomic ? it.sha.slice(0, 7) : `Step ${it.number}/${state.items.length}`;
     $("message").lastChild.textContent = it.title;
     $("message").title = it.detail ? `${it.title}\n\n${it.detail}` : it.title;
   }
-  $("prev").disabled = current <= 0;
+  $("prev").disabled = current <= (state.overview ? -1 : 0);
   $("next").disabled = current >= state.items.length - 1;
   document.title = it ? `${it.number}. ${it.title} · ${state.review} review` : "PR review";
 }
 
 async function show(i) {
+  if (i === -1 && state.overview) return showOverview();
   if (i < 0 || i >= state.items.length) return;
   current = i;
   render();
+  $("overview").hidden = true;
   $("difit").hidden = true;
   $("status").textContent = "Starting difit…";
   try {
@@ -196,6 +218,49 @@ async function show(i) {
   }
 }
 
+// overview.md, drawn with marked and mermaid (from a CDN: without the network, the raw text)
+async function showOverview() {
+  current = -1;
+  render();
+  $("difit").hidden = true;
+  $("files-box").hidden = true;
+  $("status").textContent = "";
+  $("overview").hidden = false;
+  if ($("overview-text").dataset.done) return;
+  const r = await fetch("/api/overview");
+  const text = r.ok ? await r.text() : "overview.md not found.";
+  $("overview-text").dataset.done = "1";
+  try {
+    const { marked } = await import("https://cdn.jsdelivr.net/npm/marked@15/lib/marked.esm.js");
+    $("overview-text").innerHTML = marked.parse(text);
+    const blocks = [...$("overview-text").querySelectorAll("pre > code.language-mermaid")];
+    for (const code of blocks) {
+      const div = document.createElement("div");
+      div.className = "mermaid";
+      div.textContent = code.textContent;
+      code.parentElement.replaceWith(div);
+    }
+    if (blocks.length) {
+      const { default: mermaid } = await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+      mermaid.initialize({ startOnLoad: false, securityLevel: "loose" });
+      await mermaid.run({ nodes: $("overview-text").querySelectorAll(".mermaid") });
+    }
+  } catch (e) {
+    $("overview-text").replaceChildren(Object.assign(document.createElement("pre"), { textContent: text }));
+  }
+}
+
+// a link to a repo file in the overview (relative to the package folder, #L10 for a line) opens the editor
+$("overview-text").addEventListener("click", (e) => {
+  const a = e.target.closest("a");
+  const href = a && a.getAttribute("href");
+  if (!href || /^[a-z]+:|^#/i.test(href)) return;       // web links and anchors as usual
+  e.preventDefault();
+  const url = new URL(href, `http://x/${state.package}/`);
+  const line = (url.hash.match(/^#L(\d+)/) || [])[1] || 1;
+  fetch(`/api/edit?file=${encodeURIComponent(decodeURIComponent(url.pathname.slice(1)))}&line=${line}`).catch(() => {});
+});
+$("overview-item").onclick = () => showOverview();
 
 // the files of the item on screen; a click opens one in the editor at its first change
 function showFiles(files) {
@@ -248,7 +313,7 @@ document.addEventListener("keydown", (e) => {
 setSidebar(localStorage.getItem("pr-review-nosidebar") === "1");
 (async () => {
   await refresh();
-  if (state) show(0);
+  if (state) show(state.overview ? -1 : 0);
   setInterval(refresh, 3000);
 })();
 </script>

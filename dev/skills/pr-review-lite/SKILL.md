@@ -122,7 +122,7 @@ Preloaded questions are things a reviewer should settle, shown as open difit thr
 - **Before this PR** and **With this PR**, a short paragraph each, naming real files and functions;
 - one ` ```mermaid ` `flowchart LR` of the main path, with the new or changed boxes in green. No `;` in labels.
 
-It renders in VS Code's Markdown preview and on GitHub. Nothing else to write.
+The review page opens on it, in both reviews (the **Overview** entry above the items). Link code relative to the package folder, `[`main`](../crabs/mask/mask_video.py#L55)`: a click opens it in the editor. It also renders in VS Code's preview and on GitHub.
 
 ### 6. Launch the review
 

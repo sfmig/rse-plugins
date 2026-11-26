@@ -24,6 +24,7 @@ The package folder (pr-review/, or $PR_REVIEW_DIR) holds what it reads and write
                             (without it: test files by convention)
   questions-code.json       preloaded questions, as difit threads
   questions-tests.json
+  overview.md               shown first on the review page (Markdown and mermaid)
   comments/<code|tests>/pass-N/comments.json   saved every second
 
 A review page opens in the browser: the items on the left, the chosen one in difit.
@@ -386,6 +387,8 @@ class Review:
         return {
             "review": self.review,
             "mode": self.mode,
+            "overview": (PACKAGE / "overview.md").exists(),
+            "package": PACKAGE.name,
             "pass": self.pass_no,
             "others": others,
             "othersTitle": "Only on the whole PR"
@@ -429,7 +432,8 @@ def open_in_editor(path, line):
 
 
 def serve(review, stopped):
-    """The page's server: GET / (the page), GET /api/state, POST /api/open/N, POST /api/stop,
+    """The page's server: GET / (the page), GET /api/state, GET /api/overview (overview.md),
+    POST /api/open/N, POST /api/stop,
     GET /api/edit?file=F&line=L (opens the editor, from the page's file list; 204 No Content)."""
 
     class Handler(BaseHTTPRequestHandler):
@@ -450,6 +454,12 @@ def serve(review, stopped):
         def do_GET(self):
             if self.path == "/":
                 self.reply(PAGE.read_text(), "text/html; charset=utf-8")
+            elif self.path == "/api/overview":
+                path = PACKAGE / "overview.md"
+                if path.exists():
+                    self.reply(path.read_text(), "text/markdown; charset=utf-8")
+                else:
+                    self.reply({"error": "no overview.md"}, code=404)
             elif self.path == "/api/state":
                 with review.lock:
                     self.reply(review.state())
