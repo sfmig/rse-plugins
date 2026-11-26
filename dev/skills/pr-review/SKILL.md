@@ -1,7 +1,6 @@
 ---
 name: pr-review
-description: Build a review package for a large pull request - aim and diagrams, an atomic copy of the branch, and two difit reviews (code, then tests) with preloaded questions - so a person can review it in order. Maps and indexes only; the reviewer judges the code.
-when_to_use: Use when the user asks for help reviewing a large PR or branch, a "review package", "review aid" or "PR review" of their own or someone else's branch. Do not use for an ordinary code review where the user wants Claude's own findings in the conversation.
+description: Build a review package for a pull request - aim and diagrams, an atomic copy of the branch, and two difit reviews (code, then tests) with preloaded questions - so a person can review it in order. Maps and indexes only; the reviewer judges the code. Use when the user asks for help reviewing a large PR or branch, a "review package", "review aid" or "PR review". Do not use for an ordinary code review where the user wants Claude's own findings in the conversation.
 argument-hint: "[PR branch, number or URL]"
 allowed-tools:
   - Bash(${CLAUDE_SKILL_DIR}/scripts/init_package.py *)
@@ -18,7 +17,7 @@ If that is empty, use the checked-out branch. If that is the main branch, ask th
 
 Build **maps and indexes** of the PR, not judgments. The reviewer reads the code and decides. This skill only puts the PR in an order they can follow, and points at what deserves a second look.
 
-The output is a folder in the reviewed repo, by default `pr-review/`. [`example-minimal/`](example-minimal/README.md) is a complete package for a real PR: **use it as the model for every page**, for content, level of detail and format. [NOTES.md](NOTES.md) records why each choice was made (its *User feedback* table); read it when a rule here seems arbitrary.
+The output is a folder in the reviewed repo, by default `pr-review/`. [`example-minimal/`](example-minimal/README.md) is a complete package for a real PR: **use it as the model for every page**, for content, level of detail and format. [DECISIONS.md](DECISIONS.md) records why each choice was made; read it when a rule here seems arbitrary.
 
 ## Ground rules
 
