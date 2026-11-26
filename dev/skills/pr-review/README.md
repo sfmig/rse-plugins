@@ -18,7 +18,7 @@ flowchart TD
     F --> G["2. group the commits<br/>plan.json and stage files"]:::agent
     G --> BA["build_atomic.py<br/>commits, zero-diff check"]:::script
     BA --> AB(["branch-atomic, local"])
-    AB --> IP["3. init_package.py<br/>copies template/ and scripts/package/"]:::script
+    AB --> IP["3. init_package.py<br/>copies quarto-template/ and scripts/package/"]:::script
     IP --> D["4. draft_tables.py<br/>commits, sessions, tests, not tested, components"]:::script
     D --> W["write the pages<br/>aim, diagrams, weights, behaviours"]:::agent
     W --> DL["diagram_links.py<br/>click lines and links table"]:::script
@@ -48,8 +48,8 @@ Arrows are steps in order, numbered as in [SKILL.md](SKILL.md). Rounded boxes ar
 |---|---|---|
 | [`SKILL.md`](SKILL.md) | The steps | The agent, at the start |
 | [`DECISIONS.md`](DECISIONS.md) | Why each choice was made | The agent, when a rule seems arbitrary |
-| [`MAINTAINING.md`](MAINTAINING.md) | difit and Quarto facts, traps, ideas not done | Whoever changes `template/` or `scripts/package/` |
+| [`MAINTAINING.md`](MAINTAINING.md) | difit and Quarto facts, traps, ideas not done | Whoever changes `quarto-template/` or `scripts/package/` |
 | [`example/`](example/README.md) | The pages written for one real PR | The agent, as the model for each page |
-| [`template/`](template/) | The Quarto page | `init_package.py`, copied into each package |
+| [`quarto-template/`](quarto-template/) | The Quarto page | `init_package.py`, copied into each package |
 | [`scripts/package/`](scripts/package/) | The difit scripts: `review.py`, `atomic.py`, … | `init_package.py`, copied into each package; the reviewer runs `review.py` |
 | [`scripts/`](scripts/) | `facts.py`, `build_atomic.py`, `init_package.py`, `draft_tables.py`, `diagram_links.py`, `check_package.py` | The agent |

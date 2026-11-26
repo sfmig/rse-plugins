@@ -4,7 +4,7 @@
     init_package.py [FOLDER]    (default: pr-review, at the repo root)
 
 Run from inside the reviewed repo, with the PR branch checked out. It copies the
-files that are the same for every PR: the Quarto page from template/, the difit
+files that are the same for every PR: the Quarto page from quarto-template/, the difit
 scripts from scripts/package/, and example/2-review/2-code.md with its session
 table emptied. The pages that describe the PR are left for the agent to write.
 
@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 
 SKILL = Path(__file__).resolve().parent.parent
-TEMPLATE = SKILL / "template"  # the Quarto page, copied as it is
+TEMPLATE = SKILL / "quarto-template"  # the Quarto page, copied as it is
 SCRIPTS = SKILL / "scripts" / "package"  # copied to the package's scripts/
 EXAMPLE = SKILL / "example"  # 2-review/2-code.md is taken from it
 EXAMPLE_NAME = "pr-review"  # the folder name the example's pages use

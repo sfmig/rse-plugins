@@ -73,7 +73,7 @@ If the PR branch gains commits later, the package's `scripts/atomic.py extend` a
 ${CLAUDE_SKILL_DIR}/scripts/init_package.py [folder]     # default: pr-review
 ```
 
-It copies the fixed files: the Quarto page from `template/`, the difit scripts from `scripts/package/`, and `2-review/2-code.md` with an empty session table. It also pins `code-base-url` to the branch tip on GitHub, and adds the folder to `.git/info/exclude`. It stops if the folder exists: then ask the user whether to replace it or use another name.
+It copies the fixed files: the Quarto page from `quarto-template/`, the difit scripts from `scripts/package/`, and `2-review/2-code.md` with an empty session table. It also pins `code-base-url` to the branch tip on GitHub, and adds the folder to `.git/info/exclude`. It stops if the folder exists: then ask the user whether to replace it or use another name.
 
 ### 4. Write the pages
 
