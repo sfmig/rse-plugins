@@ -6,8 +6,10 @@
 Run from inside the reviewed repo, with the PR branch checked out. Checks:
 
   1. Each page has exactly one "# " heading, on its first line (it becomes the tab name).
-  2. Each `path:N` or `path:N-M` anchor in the pages names a file that exists, with
-     that many lines, at the commit code-base-url pins (else at the branch tip).
+  2. Each code anchor in the pages names a file that exists, with that many lines,
+     at the commit code-base-url pins (else at the branch tip): `path:N` or
+     `path:N-M` in backticks, and Markdown links into the repo, like
+     [mv:538](../../crabs/mask/mask_video.py#L538) (a link without #L: the file only).
   3. Each preloaded question sits on a line the PR adds (new side of base..branch):
      difit may not show a comment on any other line.
   4. review.py can read the tables: sessions, test steps, commit weights; every
@@ -24,6 +26,7 @@ import sys
 from pathlib import Path
 
 ANCHOR = re.compile(r"`([\w./-]+\.[\w]+):(\d+)(?:-(\d+))?`")
+LINK = re.compile(r"\]\(([^)\s#]+)(?:#L(\d+)(?:-L?(\d+))?)?\)")  # [text](path#L10-L12)
 PAGES = ["1-general/1-aim.md", "2-review/1-atomic-branch.md", "2-review/2-code.md", "2-review/3-tests.md"]
 
 
@@ -43,6 +46,17 @@ def headings(text):
         elif not fence and line.startswith("# "):
             out.append(n)
     return out
+
+
+def repo_path(link, folder, root, package):
+    """The repo path a relative link from a page points at, or None if it is not code:
+    a URL, an in-page anchor, or a file of the package itself."""
+    if re.match(r"^[a-z][\w+.-]*:", link) or link.startswith(("/", "#")):
+        return None
+    target = (folder / link).resolve()
+    if package.resolve() in target.parents or not target.is_relative_to(root.resolve()):
+        return None
+    return target.relative_to(root.resolve()).as_posix()
 
 
 def added_lines(base, tip):
@@ -91,8 +105,12 @@ def main():
         if h != [1]:
             problems.append(f"{page}: needs exactly one '# ' heading, on line 1 (found on lines {h})")
         for n, line in enumerate(text.splitlines(), 1):
-            for m in ANCHOR.finditer(line):
-                file, first, last = m[1], int(m[2]), int(m[3] or m[2])
+            anchors = [(m[1], int(m[3] or m[2])) for m in ANCHOR.finditer(line)]
+            for m in LINK.finditer(line):
+                file = repo_path(m[1], path.parent, root, package)
+                if file:
+                    anchors.append((file, int(m[3] or m[2] or 0)))
+            for file, last in anchors:
                 content = git("show", f"{at}:{file}", check=False)
                 if content is None:
                     problems.append(f"{page}:{n}: {file} not in {at[:7]}")

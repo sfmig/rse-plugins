@@ -146,7 +146,7 @@ ${CLAUDE_SKILL_DIR}/scripts/check_package.py [folder]
 ${CLAUDE_PLUGIN_ROOT}/skills/proposal/scripts/check-mermaid.sh <folder>/1-general/1-aim.md
 ```
 
-`check_package.py` checks the headings, every `` `path:N` `` anchor against the pinned commit, that every question is on an added line, and that `review.py` can read the three tables (and every changed test file is in a test step). Fix every `FAIL`. If `check-mermaid.sh` exits with status 2 (no renderer), say so and carry on.
+`check_package.py` checks the headings, every code anchor (`` `path:N` `` and Markdown links into the repo) against the pinned commit, that every question is on an added line, and that `review.py` can read the three tables (and every changed test file is in a test step). Fix every `FAIL`. If `check-mermaid.sh` exits with status 2 (no renderer), say so and carry on.
 
 Optionally render the page: `cd <folder> && quarto render`. It needs the sandbox off (it writes `~/Library/Caches/quarto`).
 

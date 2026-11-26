@@ -69,9 +69,7 @@ Traps:
 ## Ideas not done
 
 - Steps that could be scripts instead of LLM work:
-    - `file:line` anchors in prose checked against the code (only `` `path:N` `` is checked now).
     - Component diagram from the import graph at base and tip (`pydeps`, or `ast` imports).
     - Duplicate helpers: `pylint --enable=duplicate-code` or `jscpd`.
-- Keep the `build_atomic.py` plan and its stage files in the package, so a rebuild after a rebased PR can reuse the grouping.
 - Give the agent one prompt per pass, built from the open threads of `comments/*/pass-N/comments.json`.
 - `facts.py` misses nested functions and non-Python files.
