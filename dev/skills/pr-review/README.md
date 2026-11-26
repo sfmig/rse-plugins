@@ -4,6 +4,15 @@ A Claude Code skill that builds a review package for a large pull request: the a
 
 Once installed, start it with `/pr-review [branch, PR number or URL]`, from inside the reviewed repo.
 
+## Requirements
+
+| Tool | For | Install |
+|---|---|---|
+| [uv](https://docs.astral.sh/uv/getting-started/installation/) | Runs every script. It fetches Python 3.10+ if needed; the scripts use only the standard library | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+| [difit](https://github.com/yoshiko-pg/difit) 5.0.12 | The two reviews (`scripts/review.py`) | `npm i -g difit@5.0.12` |
+| [Quarto](https://quarto.org) | Optional: the package as a web page | `uv tool install quarto-cli` |
+| [gh](https://cli.github.com) | Optional: a PR given by number or URL | |
+
 ## How it runs
 
 ```mermaid

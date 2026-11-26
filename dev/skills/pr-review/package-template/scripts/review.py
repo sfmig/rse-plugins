@@ -1,4 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# ///
 """Review a PR in difit, with the files of a PR review package (this script's parent folder).
 
 Two reviews, each with its own passes and preloaded questions:

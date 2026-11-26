@@ -1,4 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# ///
 """Build the atomic copy of the PR branch from a plan: one entry per commit.
 
     build_atomic.py PLAN.json [--force]

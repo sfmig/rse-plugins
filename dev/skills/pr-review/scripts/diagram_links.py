@@ -1,4 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# ///
 """The links of a flow diagram: mermaid `click` lines and the links table under it.
 
     diagram_links.py BOXES [FOLDER]    (FOLDER default: pr-review, at the repo root)

@@ -1,4 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# ///
 """Check a PR review package before handing it to the reviewer.
 
     check_package.py [FOLDER]    (default: pr-review, at the repo root)

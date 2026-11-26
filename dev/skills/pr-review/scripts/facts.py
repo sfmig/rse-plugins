@@ -1,4 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# ///
 """The facts of a PR, as Markdown: commits, files, and the functions it changes.
 
     facts.py [BRANCH]    (default: the checked-out branch)

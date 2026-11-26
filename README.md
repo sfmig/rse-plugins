@@ -143,6 +143,8 @@ You can also run `/plugin` and pick the plugins from the **Discover** tab. Run `
 
 In the chat interface, you can click `/` and select "Manage plugins" > select the Marketplaces tab, and paste the path to the `rse-plugins` clone.
 
+Some skills need tools of their own: `pr-review` needs [uv](https://docs.astral.sh/uv/) and difit (see [its requirements](dev/skills/pr-review/README.md#requirements)).
+
 
 ## Contributing
 

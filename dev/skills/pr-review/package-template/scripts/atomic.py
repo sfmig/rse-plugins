@@ -1,4 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# ///
 """The PR's branches, and the atomic copy of the PR branch.
 
   atomic.py extend    add the PR branch's new commits to the end of the atomic branch

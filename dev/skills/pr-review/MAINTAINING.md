@@ -34,6 +34,7 @@ Traps in the scripts:
 - Match a `git blame --porcelain` header strictly (`^[0-9a-f]{40} \d+ \d+`): a long commit summary can look like one.
 - When a run stops, stop the difit on screen too, or it is left running.
 - npm in the sandbox: `npm_config_cache=$TMPDIR/npmcache`.
+- Every executable script starts `#!/usr/bin/env -S uv run --script` with a `requires-python` block. Keep the scripts on the standard library, so the block lists no dependencies. Imported modules (`comments.py`, `links.py`) need no header. Tested on 3.10: `UV_PYTHON=3.10 scripts/facts.py`. In the sandbox, if uv cannot write its cache: `UV_CACHE_DIR=$TMPDIR/uvcache`.
 - Shell, if a script is ever written in it (the first difit runner and atomic build were):
     - zsh reads `$VAR:c…` as a modifier: write `"${VAR}:path"`.
     - `set -e` with `read -r -a x < <(…)` stops at end of input with no final newline: add `|| true`.

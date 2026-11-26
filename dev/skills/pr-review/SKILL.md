@@ -40,6 +40,8 @@ Work out the branches from git; do not ask for what git can tell you.
 ${CLAUDE_SKILL_DIR}/scripts/facts.py [branch]    # default: the checked-out branch
 ```
 
+The scripts run with uv (`uv run --script`). If `facts.py` fails with `uv: No such file or directory`, stop and ask the user to install uv: <https://docs.astral.sh/uv/getting-started/installation/>.
+
 It prints the base (merge base with origin's default branch), the commits, each changed file with its lines and whether it is a test, and the functions and constants the PR adds, removes or changes (signature, value, or body only). Use the functions table for the boxes to mark as new or changed in the diagrams, and to group the atomic commits.
 
 For a PR number or URL, check it out only if the user agrees (`gh pr checkout N`). A test file is one in a `tests/` folder, or named `test_*.py`, `*_test.py`, `conftest.py`: `facts.py` and the review scripts share this rule (`is_test` in `package-template/scripts/atomic.py`).

@@ -1,4 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# ///
 """First drafts of the package's tables, for the agent to edit (it does not judge).
 
     draft_tables.py [commits | sessions | tests | not-tested | components] [--coverage FILE]
