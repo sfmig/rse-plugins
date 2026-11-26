@@ -8,6 +8,7 @@ allowed-tools:
   - Bash(${CLAUDE_SKILL_DIR}/scripts/facts.py *)
   - Bash(${CLAUDE_SKILL_DIR}/scripts/build_atomic.py *)
   - Bash(${CLAUDE_SKILL_DIR}/scripts/draft_tables.py *)
+  - Bash(${CLAUDE_SKILL_DIR}/scripts/diagram_links.py *)
   - Bash(${CLAUDE_PLUGIN_ROOT}/skills/proposal/scripts/check-mermaid.sh *)
 ---
 
@@ -96,6 +97,14 @@ ${CLAUDE_SKILL_DIR}/scripts/draft_tables.py not-tested --coverage coverage.xml  
 - **sessions**: regroup related files; keep about 50–400 lines a sitting.
 - **tests**: write each behaviour (left `TODO`), merge steps of one module (a renamed one, for example), and add each shared fixture file to the steps that use it.
 - **not-tested**: the changed functions no test file names. A name match is not a test: check each one before writing it, and say UNSURE where you have not. With a coverage report (`pytest --cov --cov-report=xml`, which the user runs, not you), it also lists the added lines no test ran.
+
+For the flow diagram's links, list each box in a text file in your scratchpad, `ID | label | path:line path:line` (call site first, definition last), then:
+
+```bash
+${CLAUDE_SKILL_DIR}/scripts/diagram_links.py <scratchpad>/boxes.txt [folder]
+```
+
+It prints the `click` lines (pinned to `code-base-url`), the links table, and a short label for each box (`mv:538 to mv:55`); on stderr, each anchored line of code, to check it is the right one.
 
 Tables that `review.py` reads must keep the example's columns exactly:
 
