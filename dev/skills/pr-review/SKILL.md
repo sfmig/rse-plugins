@@ -5,7 +5,7 @@ argument-hint: "[PR branch, number or URL]"
 allowed-tools:
   - Bash(${CLAUDE_SKILL_DIR}/scripts/init_package.py *)
   - Bash(${CLAUDE_SKILL_DIR}/scripts/check_package.py *)
-  - Bash(${CLAUDE_SKILL_DIR}/scripts/signature_changes.py *)
+  - Bash(${CLAUDE_SKILL_DIR}/scripts/facts.py *)
   - Bash(${CLAUDE_PLUGIN_ROOT}/skills/proposal/scripts/check-mermaid.sh *)
 ---
 
@@ -34,13 +34,12 @@ The output is a folder in the reviewed repo, by default `pr-review/`. [`example/
 Work out the branches from git; do not ask for what git can tell you.
 
 ```bash
-BASE=$(git merge-base main <branch>)             # origin's default branch, if not main
-git log --reverse --format='%h %s' $BASE..<branch>
-git diff --numstat -M $BASE <branch>             # lines changed per file
-${CLAUDE_SKILL_DIR}/scripts/signature_changes.py $BASE <branch>   # functions and constants added, removed, changed
+${CLAUDE_SKILL_DIR}/scripts/facts.py [branch]    # default: the checked-out branch
 ```
 
-For a PR number or URL, check it out only if the user agrees (`gh pr checkout N`). Note which changed files are tests: in a `tests/` folder, or named `test_*.py`, `*_test.py`, `conftest.py`. The review scripts use the same rule.
+It prints the base (merge base with origin's default branch), the commits, each changed file with its lines and whether it is a test, and the functions and constants the PR adds, removes or changes (signature, value, or body only). Use the functions table for the boxes to mark as new or changed in the diagrams, and to group the atomic commits.
+
+For a PR number or URL, check it out only if the user agrees (`gh pr checkout N`). A test file is one in a `tests/` folder, or named `test_*.py`, `*_test.py`, `conftest.py`: `facts.py` and the review scripts share this rule (`is_test` in `scripts/package/atomic.py`).
 
 ### 2. Build the atomic branch
 

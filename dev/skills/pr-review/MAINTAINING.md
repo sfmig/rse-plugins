@@ -71,4 +71,4 @@ Traps:
     - Duplicate helpers: `pylint --enable=duplicate-code` or `jscpd`.
 - Save the atomic grouping (which change went to which commit), so a rebuild after a rebased PR can reuse it.
 - Give the agent one prompt per pass, built from the open threads of `comments/*/pass-N/comments.json`.
-- `signature_changes.py` misses class methods and nested functions.
+- `facts.py` misses nested functions and non-Python files.
