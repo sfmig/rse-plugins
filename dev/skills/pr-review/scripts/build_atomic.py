@@ -36,7 +36,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "package"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "package-template" / "scripts"))
 from atomic import Branches, git, git_ok  # noqa: E402
 
 

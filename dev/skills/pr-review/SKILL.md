@@ -42,7 +42,7 @@ ${CLAUDE_SKILL_DIR}/scripts/facts.py [branch]    # default: the checked-out bran
 
 It prints the base (merge base with origin's default branch), the commits, each changed file with its lines and whether it is a test, and the functions and constants the PR adds, removes or changes (signature, value, or body only). Use the functions table for the boxes to mark as new or changed in the diagrams, and to group the atomic commits.
 
-For a PR number or URL, check it out only if the user agrees (`gh pr checkout N`). A test file is one in a `tests/` folder, or named `test_*.py`, `*_test.py`, `conftest.py`: `facts.py` and the review scripts share this rule (`is_test` in `scripts/package/atomic.py`).
+For a PR number or URL, check it out only if the user agrees (`gh pr checkout N`). A test file is one in a `tests/` folder, or named `test_*.py`, `*_test.py`, `conftest.py`: `facts.py` and the review scripts share this rule (`is_test` in `package-template/scripts/atomic.py`).
 
 ### 2. Build the atomic branch
 
@@ -73,7 +73,7 @@ If the PR branch gains commits later, the package's `scripts/atomic.py extend` a
 ${CLAUDE_SKILL_DIR}/scripts/init_package.py [folder]     # default: pr-review
 ```
 
-It copies the fixed files: the Quarto page from `quarto-template/`, the difit scripts from `scripts/package/`, and `2-review/2-code.md` with an empty session table. It also pins `code-base-url` to the branch tip on GitHub, and adds the folder to `.git/info/exclude`. It stops if the folder exists: then ask the user whether to replace it or use another name.
+It copies the fixed files, all of `package-template/` (the Quarto page and the difit scripts), and `2-review/2-code.md` with an empty session table. It also pins `code-base-url` to the branch tip on GitHub, and adds the folder to `.git/info/exclude`. It stops if the folder exists: then ask the user whether to replace it or use another name.
 
 ### 4. Write the pages
 
