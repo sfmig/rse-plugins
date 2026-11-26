@@ -34,6 +34,11 @@ Traps in the scripts:
 - Match a `git blame --porcelain` header strictly (`^[0-9a-f]{40} \d+ \d+`): a long commit summary can look like one.
 - When a run stops, stop the difit on screen too, or it is left running.
 - npm in the sandbox: `npm_config_cache=$TMPDIR/npmcache`.
+- Shell, if a script is ever written in it (the first difit runner and atomic build were):
+    - zsh reads `$VAR:c…` as a modifier: write `"${VAR}:path"`.
+    - `set -e` with `read -r -a x < <(…)` stops at end of input with no final newline: add `|| true`.
+    - `set -o pipefail` with `git log | head` (or `awk '{ exit }'`) stops on SIGPIPE: let the reader take all input.
+    - macOS ships bash 3.2: no `mapfile`; use `while read`.
 - Test without a browser: `REVIEW_NO_BROWSER=1`, on a copy of the package so real comments stay safe.
 
 ## Quarto page

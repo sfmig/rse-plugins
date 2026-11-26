@@ -6,6 +6,7 @@ allowed-tools:
   - Bash(${CLAUDE_SKILL_DIR}/scripts/init_package.py *)
   - Bash(${CLAUDE_SKILL_DIR}/scripts/check_package.py *)
   - Bash(${CLAUDE_SKILL_DIR}/scripts/facts.py *)
+  - Bash(${CLAUDE_SKILL_DIR}/scripts/build_atomic.py *)
   - Bash(${CLAUDE_PLUGIN_ROOT}/skills/proposal/scripts/check-mermaid.sh *)
 ---
 
@@ -45,11 +46,22 @@ For a PR number or URL, check it out only if the user agrees (`gh pr checkout N`
 
 A local branch `<branch>-atomic`, with the same final files as the PR branch, rebuilt as a short series of commits that each do one thing. Order: plumbing (dependencies, helpers) → core → wiring → tests → docs. Tests come after the code, in their own commits, so the code review can skip them.
 
-- Build each commit's files from the previous stage with exact string replacements, in a script in your scratchpad.
-- Commit with a temporary index, so the working tree is never touched:
-  `GIT_INDEX_FILE=<tmp> git read-tree …; git update-index …; git write-tree; git commit-tree <tree> -p <parent> -m …; git update-ref refs/heads/<branch>-atomic <commit>`.
-- Assert the last stage equals the branch tip: `git diff <branch> <branch>-atomic` must be empty.
-- Never push it. `git worktree add` is not needed, and needs the sandbox off.
+You decide the grouping; `build_atomic.py` makes the commits. Write a plan in your scratchpad, one entry per commit, oldest first:
+
+```json
+[{"message": "Add scikit-image dependency", "files": ["pyproject.toml"]},
+ {"message": "Labels: 8-frame chunks",
+  "files": [{"path": "crabs/mask/mask_video.py", "from": "stages/05/mask_video.py"}]}]
+```
+
+- A plain path takes the file as it is at the PR tip (deleted, if the tip deletes it). List both paths of a renamed file.
+- For a file whose changes are split over commits, give its content at that commit with `from` (relative to the plan). Write each stage from the previous one with exact string replacements.
+
+```bash
+${CLAUDE_SKILL_DIR}/scripts/build_atomic.py <scratchpad>/plan.json [--force]
+```
+
+It commits with a temporary index (the working tree is never touched), and creates `<branch>-atomic` only if the last commit has the same files as the PR tip. Otherwise it lists the files that differ: fix the plan and run it again. `--force` replaces an existing atomic branch and prints the old tip. Never push it.
 
 If the PR branch gains commits later, the package's `scripts/atomic.py extend` appends them to the atomic branch. A rebased PR branch needs a rebuild.
 

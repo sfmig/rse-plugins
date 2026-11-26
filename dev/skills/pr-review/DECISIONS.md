@@ -28,17 +28,12 @@ The final choices behind [SKILL.md](SKILL.md), one line each, with the reason.
 
 ## Atomic branch
 
-- **Built once by the agent** [25]. Grouping commits needs judgment.
+- **Grouped by the agent, built by `build_atomic.py`** [25]. Grouping needs judgment; the commits and the zero-diff check do not, so a script makes them the same way every time.
 - **Order: plumbing → core → wiring → tests → docs.** Tests in their own commits, so the code review can skip them [59].
 - **Temporary index and `commit-tree`.** The working tree and the PR branch are never touched.
-- **Zero diff with the PR tip** is the only check. Middle commits are not run.
+- **Zero diff with the PR tip** is the only check, and `build_atomic.py` creates no branch without it. Middle commits are not run.
 - **Extend, do not rebuild** [25, 44]. `atomic.py extend` finds the commit with the same tree and replays later ones. A rebuild changes every hash, item number and saved comment.
-- **`atomic.py` is the only code that changes a branch** [27, 44]. `review.py` is read-only on git.
-- **Shell traps when writing the build script:**
-    - zsh reads `$VAR:c…` as a modifier: write `"${VAR}:path"`.
-    - `set -e` with `read -r -a x < <(…)` stops the script at end of input with no final newline: add `|| true`.
-    - `set -o pipefail` with `git log | head` (or `awk '{ exit }'`) stops on SIGPIPE: let the reader take all input.
-    - macOS ships bash 3.2: no `mapfile`; use `while read`.
+- **Only `build_atomic.py` and `atomic.py extend` write a branch, and only `<branch>-atomic`** [27, 44]. `review.py` is read-only on git.
 
 ## The two reviews
 
