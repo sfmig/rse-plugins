@@ -1,6 +1,6 @@
-# Example: minimal PR review package (trial PR)
+# Example: PR review package (trial PR)
 
-A copy of `pr-review-minimal/` from `crabs-exploration` (branch `smg/add-ellipse-params-to-tracks`, tip `9942560`), 2026-11-25. See NOTES.md (at `5b85de2`), "Minimal layout" and feedback 58–61.
+A review package for a PR in `crabs-exploration` (branch `smg/add-ellipse-params-to-tracks`, tip `9942560`), 2026-11-25. Its commands use the default folder name, `pr-review/`. Design choices: [DECISIONS.md](../DECISIONS.md).
 
 | Tab | File |
 |---|---|

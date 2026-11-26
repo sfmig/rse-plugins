@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Start a PR review package in the reviewed repo, from the minimal example.
+"""Start a PR review package in the reviewed repo, from example/.
 
     init_package.py [FOLDER]    (default: pr-review, at the repo root)
 
@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 
 EXAMPLE = Path(__file__).resolve().parent.parent / "example"
-EXAMPLE_NAME = "pr-review-minimal"  # the folder name the example's pages use
+EXAMPLE_NAME = "pr-review"  # the folder name the example's pages use
 FIXED = [
     "_quarto.yml", "index.qmd", "styles.css", "tab-sections.lua", "gh-alerts.lua",
     "mermaid.lua", "mermaid.html", ".gitignore",

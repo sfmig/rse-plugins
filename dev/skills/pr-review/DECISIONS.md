@@ -2,15 +2,15 @@
 
 The final choices behind [SKILL.md](SKILL.md), one line each, with the reason.
 
-- Numbers in brackets are rows of the *User feedback* table in the design notes, kept in git history: `git show 5b85de2:dev/skills/pr-review/NOTES.md`.
+- Numbers in brackets are rows of the *User feedback* table in the design notes, deleted in `61d084d`: `git show 61d084d^:dev/skills/pr-review/NOTES.md`.
 - [MAINTAINING.md](MAINTAINING.md) holds the difit and Quarto facts, for changing the fixed files.
 
 ## Aim
 
 - **Maps and indexes, not judgments.** The reviewer reads the code and decides. The skill only orders the PR and points at what needs a second look.
-- **Minimal layout first** [58]. Four tabs: aim and diagrams, atomic branch, code review, tests review.
+- **Four tabs** [58]: aim and diagrams, atomic branch, code review, tests review.
     - Left out: signatures, sequence diagram, "predict first", red flags. Each one was extra reading for little gain.
-    - They stay possible extras, in git history: `git show 5b85de2:dev/skills/pr-review/example/README.md`.
+    - They stay possible extras, in an earlier example with more tabs, deleted in `aa709dc`: `git show aa709dc^:dev/skills/pr-review/example/README.md`.
 
 ## Pages
 

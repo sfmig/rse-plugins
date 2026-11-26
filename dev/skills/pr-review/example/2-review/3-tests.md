@@ -8,7 +8,7 @@ This is the second part of the review: the test files, next to the code they tes
 Install [`difit`](https://yoshiko-pg.github.io/difit/) if you haven't yet (see *Review code with difit*). Then, run the **helper script**:
 
 ```bash
-pr-review-minimal/scripts/review.py tests
+pr-review/scripts/review.py tests
 ```
 
 ## Workflow
@@ -19,7 +19,7 @@ Each changed test has a 🔗 comment on its `def` line that jumps to the functio
 
 `review.py` reads the files from the *Files* column. Edit the table to regroup the tests. If a changed test file is in no step, `review.py` prints it.
 
-To **leave out the AI-suggested questions** (*Tests questions* below), add `--no-questions`: `pr-review-minimal/scripts/review.py tests --no-questions`.
+To **leave out the AI-suggested questions** (*Tests questions* below), add `--no-questions`: `pr-review/scripts/review.py tests --no-questions`.
 
 <details open>
 <summary><b>Review steps table</b></summary>
@@ -36,7 +36,7 @@ To **leave out the AI-suggested questions** (*Tests questions* below), add `--no
 <details>
 <summary><b>Tests passes</b></summary>
 
-* Each run starts a new **pass** of the tests review, saved to `pr-review-minimal/comments/tests/pass-N/comments.json`. Add to an earlier pass with `--pass N`. Leave out the preloaded questions (*Tests questions* below) with `--no-questions`.
+* Each run starts a new **pass** of the tests review, saved to `pr-review/comments/tests/pass-N/comments.json`. Add to an earlier pass with `--pass N`. Leave out the preloaded questions (*Tests questions* below) with `--no-questions`.
 * Comments here stay in the tests review, also those written on a source file of a step. They do not show in the code review.
 * The prompts in *Review code with difit* → *After the review* work here too, with `comments/tests/`.
 

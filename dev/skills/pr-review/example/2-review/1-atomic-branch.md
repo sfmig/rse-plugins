@@ -65,7 +65,7 @@ Commits with only test files (12–15 here) are left out of the code review (tab
 If commits are added to the PR branch after the atomic branch was built, add them to the end of the atomic branch with:
 
 ```bash
-pr-review-minimal/scripts/atomic.py extend
+pr-review/scripts/atomic.py extend
 ```
 
 It looks for the commit on the PR branch that has the same files as the atomic tip, and replays the commits after it. If the PR branch was rebased or amended, there is no matching commit, in that case it stops and you can ask the agent to rebuild the atomic branch instead.

@@ -64,7 +64,7 @@ It copies the fixed files from `example/` (the Quarto page, the difit scripts, `
 
 ### 4. Write the pages
 
-Four pages, one tab each. Write each one after its counterpart in `example/`, replacing every PR-specific part. Use the package's folder name in commands (`pr-review/scripts/review.py`, not `pr-review-minimal/…`).
+Four pages, one tab each. Write each one after its counterpart in `example/`, replacing every PR-specific part. The example's commands use the default folder, `pr-review/`; use the package's own folder name if it differs.
 
 | Tab | File | Write |
 |---|---|---|
