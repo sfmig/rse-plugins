@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """First drafts of the package's tables, for the agent to edit (it does not judge).
 
-    draft_tables.py [commits | sessions | tests | not-tested] [--coverage FILE]
+    draft_tables.py [commits | sessions | tests | not-tested | components] [--coverage FILE]
 
 Run from inside the reviewed repo, with the PR branch checked out (or set BRANCH=...).
-Read-only: prints Markdown, writes nothing. With no table named, prints all four.
+Read-only: prints Markdown, writes nothing. With none named, prints all five.
 
   commits     the commits table of 1-atomic-branch.md, from <branch>-atomic: number,
               hash, subject as purpose, files, +/-. Weight is left as TODO.
@@ -18,6 +18,12 @@ Read-only: prints Markdown, writes nothing. With no table named, prints all four
               tip (a name match: a mention is not a test). With --coverage FILE, a
               coverage.py XML report (pytest --cov --cov-report=xml, run by the user),
               also the added lines that no test ran.
+  components  the two component diagrams of 1-aim.md, before (base) and after (tip),
+              as mermaid: the top-level functions of the changed code files that the
+              PR adds, removes or changes, their direct callers and callees there, and
+              the calls between them (found with `ast`, through each file's imports).
+              Green = added or changed. Not shown: methods, calls through variables,
+              code outside the changed files (scripts, stores, other packages).
 """
 
 import ast
@@ -211,6 +217,106 @@ def not_tested_table(b, coverage=None):
     return text
 
 
+def dotted(path):
+    return path[:-3].removesuffix("/__init__").replace("/", ".")
+
+
+def resolve(module, scope):
+    """The path in scope of a dotted module name (also under a src/ layout), or None."""
+    for path in scope:
+        d = dotted(path)
+        if d == module or d.endswith("." + module):
+            return path
+    return None
+
+
+def call_graph(rev, scope):
+    """({(path, name)}, {(caller, callee)}) of the top-level functions of scope at rev."""
+    trees = {}
+    for path in scope:
+        try:
+            trees[path] = ast.parse(git("show", f"{rev}:{path}", check=False) or "")
+        except SyntaxError:
+            pass
+    defs = {path: {n.name: n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
+            for path, tree in trees.items()}
+    nodes, edges = {(p, n) for p, d in defs.items() for n in d}, set()
+    for path, tree in trees.items():
+        modules, names = {}, {}  # alias -> path; alias -> (path, name)
+        package = dotted(path).split(".")[:-1]
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for a in node.names:
+                    if (target := resolve(a.name, scope)):
+                        modules[a.asname or a.name] = target
+            elif isinstance(node, ast.ImportFrom):
+                base = node.module or ""
+                if node.level:  # relative: from the file's package
+                    up = package[: len(package) - node.level + 1]
+                    base = ".".join([*up, *([node.module] if node.module else [])])
+                for a in node.names:
+                    if (target := resolve(f"{base}.{a.name}", scope)):
+                        modules[a.asname or a.name] = target
+                    elif (target := resolve(base, scope)):
+                        names[a.asname or a.name] = (target, a.name)
+        for name, fn in defs.get(path, {}).items():
+            for call in ast.walk(fn):
+                if not isinstance(call, ast.Call):
+                    continue
+                f, callee = call.func, None
+                if isinstance(f, ast.Name):
+                    callee = (path, f.id) if f.id in defs[path] else names.get(f.id)
+                elif isinstance(f, ast.Attribute) and ast.unparse(f.value) in modules:
+                    callee = (modules[ast.unparse(f.value)], f.attr)
+                if callee in nodes and callee != (path, name):
+                    edges.add(((path, name), callee))
+    return nodes, edges
+
+
+def mermaid(nodes, edges, changed, colour=True):
+    """A flowchart LR of the changed functions, their direct callers and callees."""
+    keep = {e for e in edges if e[0] in changed or e[1] in changed}
+    shown = sorted(changed | {n for e in keep for n in e})
+    ident = lambda n: re.sub(r"\W", "_", f"{PurePosixPath(n[0]).stem}_{n[1]}")
+    label = lambda n: f'{ident(n)}["{PurePosixPath(n[0]).stem}.{n[1]}"]'
+    lines = ["```mermaid", "flowchart LR"]
+    linked = set()
+    for a, z in sorted(keep):
+        lines.append(f"    {label(a) if a not in linked else ident(a)} --> {label(z) if z not in linked else ident(z)}")
+        linked |= {a, z}
+    lines += [f"    {label(n)}" for n in shown if n not in linked]
+    green = [ident(n) for n in shown if n in changed]
+    if green and colour:
+        lines += ["", "    classDef new fill:#d4edda,stroke:#2e7d32,color:#000", f"    class {','.join(green)} new"]
+    return "\n".join(lines + ["```"]), len(shown)
+
+
+def components_draft(b):
+    files = [f for f in files_changed(b.base, b.branch) if not is_test(f[2]) and f[2].endswith(".py")]
+    before_scope = [old for s, old, _, _, _ in files if s != "A"]
+    after_scope = [new for s, _, new, _, _ in files if s != "D"]
+    changed_before, changed_after = set(), set()
+    for status, old, new, _, _ in files:
+        for change, key, _ in changes(b.base, b.branch, old, new if status != "D" else old):
+            if not key.startswith("def ") or "." in key[4:]:
+                continue  # methods are not drawn
+            if change != "added":
+                changed_before.add((old, key[4:]))
+            if change != "removed":
+                changed_after.add((new, key[4:]))
+    out = []
+    for title, rev, scope, focus in (("Before", b.base, before_scope, changed_before),
+                                     ("After", b.branch, after_scope, changed_after)):
+        nodes, edges = call_graph(rev, scope)
+        text, n = mermaid(nodes, edges, focus & nodes, colour=title == "After")  # before: no colours
+        out.append(f"### {title} (`{git('rev-parse', '--short', rev)}`)\n\n{text}\n\n{n} boxes.")
+    out.append("Arrows: caller to callee. Before: the functions the PR removes or changes, with "
+               "their callers and callees. After: green = added or changed. Cut to the main path, "
+               "add what the code calls outside these files (scripts, stores), and a short note "
+               "per box on what changed.")
+    return "\n\n".join(out) + "\n"
+
+
 def main():
     args = sys.argv[1:]
     coverage = None
@@ -220,7 +326,8 @@ def main():
         coverage = str(Path(coverage).resolve())
         del args[i:i + 2]
     tables = {"commits": commits_table, "sessions": sessions_table,
-              "tests": tests_table, "not-tested": lambda b: not_tested_table(b, coverage)}
+              "tests": tests_table, "not-tested": lambda b: not_tested_table(b, coverage),
+              "components": components_draft}
     if len(args) > 1 or (args and args[0] not in tables):
         sys.exit(__doc__)
     os.chdir(git("rev-parse", "--show-toplevel"))

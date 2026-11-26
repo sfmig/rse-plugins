@@ -86,10 +86,10 @@ Four pages, one tab each. Write each one after its counterpart in `example/`, re
 | Review code with difit | `2-review/2-code.md` | Written by `init_package.py`. Fill in the **session plan table** only: one row per sitting of about 50–400 changed lines, related files together, no test files |
 | Review tests with difit | `2-review/3-tests.md` | The **test steps table**: one step per module under test, with its source files and test files (and shared fixtures); then, collapsed: passes, tests questions, not tested, bug-fix commits with or without a test that fails before the fix |
 
-Start the tables from drafts, then edit them: the drafts group by file names, folders and imports, and judge nothing.
+Start the tables and the component diagrams from drafts, then edit them: the drafts group by file names, folders, imports and calls, and judge nothing.
 
 ```bash
-${CLAUDE_SKILL_DIR}/scripts/draft_tables.py [commits | sessions | tests | not-tested]   # default: all four
+${CLAUDE_SKILL_DIR}/scripts/draft_tables.py [commits | sessions | tests | not-tested | components]   # default: all five
 ${CLAUDE_SKILL_DIR}/scripts/draft_tables.py not-tested --coverage coverage.xml       # if the user has a report
 ```
 
@@ -97,6 +97,7 @@ ${CLAUDE_SKILL_DIR}/scripts/draft_tables.py not-tested --coverage coverage.xml  
 - **sessions**: regroup related files; keep about 50–400 lines a sitting.
 - **tests**: write each behaviour (left `TODO`), merge steps of one module (a renamed one, for example), and add each shared fixture file to the steps that use it.
 - **not-tested**: the changed functions no test file names. A name match is not a test: check each one before writing it, and say UNSURE where you have not. With a coverage report (`pytest --cov --cov-report=xml`, which the user runs, not you), it also lists the added lines no test ran.
+- **components**: the before and after call graphs of the functions the PR changes, with their direct callers and callees. Cut each to the main path, add what the code calls outside the changed files (the shell script, the store), and a short note per box on what changed (`config file optional`).
 
 For the flow diagram's links, list each box in a text file in your scratchpad, `ID | label | path:line path:line` (call site first, definition last), then:
 

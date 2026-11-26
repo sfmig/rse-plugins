@@ -69,7 +69,6 @@ Traps:
 ## Ideas not done
 
 - Steps that could be scripts instead of LLM work:
-    - Component diagram from the import graph at base and tip (`pydeps`, or `ast` imports).
-    - Duplicate helpers: `pylint --enable=duplicate-code` or `jscpd`.
+    - Detect duplicate helpers: `pylint --enable=duplicate-code` or `jscpd`.
 - Give the agent one prompt per pass, built from the open threads of `comments/*/pass-N/comments.json`.
 - `facts.py` misses nested functions and non-Python files.
