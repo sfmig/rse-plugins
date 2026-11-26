@@ -61,4 +61,4 @@ The final choices behind [SKILL.md](SKILL.md), one line each, with the reason.
 - **Facts from git, not recorded** [26, 43]. Branch, base and atomic branch are worked out; inputs are only the package's tables and question files.
 - **One review page with a sidebar; difit in an iframe** [32]. One difit server at a time, installed once: an item opens in under 0.5 s [31].
 - **Code review in difit's git mode**, with a commit holding only the item's files [60]. Keeps difit's "Open in editor"; a diff on stdin disables it.
-- **Deterministic where possible** [15]: `facts.py`, `check_package.py`, `check-mermaid.sh`. The LLM writes the aim, the diagrams, the atomic grouping and the questions.
+- **Deterministic where possible** [15]: `facts.py`, `build_atomic.py`, `draft_tables.py`, `check_package.py`, `check-mermaid.sh`. Drafts judge nothing: the agent edits them. The LLM writes the aim, the diagrams, the atomic grouping and the questions.

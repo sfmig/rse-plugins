@@ -71,9 +71,7 @@ Traps:
 - Steps that could be scripts instead of LLM work:
     - `file:line` anchors in prose checked against the code (only `` `path:N` `` is checked now).
     - Component diagram from the import graph at base and tip (`pydeps`, or `ast` imports).
-    - Tests added or removed: `pytest --collect-only -q` at base and tip, then diff.
-    - Changed lines not tested: `pytest --cov` with `diff-cover`, to replace the grep-based *Not tested* table.
     - Duplicate helpers: `pylint --enable=duplicate-code` or `jscpd`.
-- Save the atomic grouping (which change went to which commit), so a rebuild after a rebased PR can reuse it.
+- Keep the `build_atomic.py` plan and its stage files in the package, so a rebuild after a rebased PR can reuse the grouping.
 - Give the agent one prompt per pass, built from the open threads of `comments/*/pass-N/comments.json`.
 - `facts.py` misses nested functions and non-Python files.

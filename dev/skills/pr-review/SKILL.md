@@ -7,6 +7,7 @@ allowed-tools:
   - Bash(${CLAUDE_SKILL_DIR}/scripts/check_package.py *)
   - Bash(${CLAUDE_SKILL_DIR}/scripts/facts.py *)
   - Bash(${CLAUDE_SKILL_DIR}/scripts/build_atomic.py *)
+  - Bash(${CLAUDE_SKILL_DIR}/scripts/draft_tables.py *)
   - Bash(${CLAUDE_PLUGIN_ROOT}/skills/proposal/scripts/check-mermaid.sh *)
 ---
 
@@ -82,7 +83,19 @@ Four pages, one tab each. Write each one after its counterpart in `example/`, re
 | Aim and diagrams | `1-general/1-aim.md` | **Aim** (open): two bold-led paragraphs, "**Before this PR**" (what the code held and how it behaved) and "**With this PR**" (what is added, what it aligns with, what changes). Plain words; name real variables and files. Then, collapsed: **Components before and after** (two `flowchart LR`, each box a real file or function, green = new or changed) and **Flow diagram** of the main path (legend subgraph, `mv:538 to mv:55` call-site-to-definition labels, `click` links to the pinned GitHub URL, and a collapsed table of the same links) |
 | Atomic branch | `2-review/1-atomic-branch.md` | Why the original branch is not atomic (table of signs, with commits); the scratch branch and the zero-diff check; the **commits table**; extending; limits (only the final tree is checked; middle commits not run) |
 | Review code with difit | `2-review/2-code.md` | Written by `init_package.py`. Fill in the **session plan table** only: one row per sitting of about 50–400 changed lines, related files together, no test files |
-| Review tests with difit | `2-review/3-tests.md` | The **test steps table**: one step per module under test, with its source files and test files (and shared fixtures); then, collapsed: passes, tests questions, not tested (by grep of `tests/`), bug-fix commits with or without a test that fails before the fix |
+| Review tests with difit | `2-review/3-tests.md` | The **test steps table**: one step per module under test, with its source files and test files (and shared fixtures); then, collapsed: passes, tests questions, not tested, bug-fix commits with or without a test that fails before the fix |
+
+Start the tables from drafts, then edit them: the drafts group by file names, folders and imports, and judge nothing.
+
+```bash
+${CLAUDE_SKILL_DIR}/scripts/draft_tables.py [commits | sessions | tests | not-tested]   # default: all four
+${CLAUDE_SKILL_DIR}/scripts/draft_tables.py not-tested --coverage coverage.xml       # if the user has a report
+```
+
+- **commits**: fill in each weight (left `TODO`); shorten the purpose if needed.
+- **sessions**: regroup related files; keep about 50–400 lines a sitting.
+- **tests**: write each behaviour (left `TODO`), merge steps of one module (a renamed one, for example), and add each shared fixture file to the steps that use it.
+- **not-tested**: the changed functions no test file names. A name match is not a test: check each one before writing it, and say UNSURE where you have not. With a coverage report (`pytest --cov --cov-report=xml`, which the user runs, not you), it also lists the added lines no test ran.
 
 Tables that `review.py` reads must keep the example's columns exactly:
 
