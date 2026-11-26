@@ -16,7 +16,7 @@ adds them to difit each time and never saves them (their ids start with "link-")
 import ast
 import re
 
-from atomic import git
+from atomic import git, is_test
 
 PREFIX = "link-"
 
@@ -76,8 +76,8 @@ def link(name, line_id):
 def test_links(diff, files, rev):
     """The link comments of one step, as difit --comment imports."""
     ids = line_ids(diff)
-    tests_files = sorted(p for p in files if p.startswith("tests/") and p.endswith(".py"))
-    source_files = sorted(p for p in files if not p.startswith("tests/") and p.endswith(".py"))
+    tests_files = sorted(p for p in files if is_test(p) and p.endswith(".py"))
+    source_files = sorted(p for p in files if not is_test(p) and p.endswith(".py"))
 
     # functions of the source files whose def line the diff shows
     under_test = {}  # name: (path, line)

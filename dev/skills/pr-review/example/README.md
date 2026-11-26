@@ -1,18 +1,16 @@
-# Example: PR review package (trial PR)
+# Example: minimal PR review package (trial PR)
 
-A copy of the `pr-review/` folder made for the trial PR in `crabs-exploration`
-(branch `smg/add-ellipse-params-to-tracks`, tip `516c6c4`). Copied 2026-11-20; updated 2026-11-23
-(scripts moved to `scripts/`, see NOTES.md feedback 22–29) and 2026-11-24 (difit runner
-rewritten as a review page in Python, see NOTES.md feedback 30–44) and 2026-11-25
-(tests and red flags moved into `2-review/`, `tab-sections.lua` colours the Quarto tabs by block;
-later the same day, `review.py tests` with test↔function links, and an editor file list in the sidebar, see NOTES.md feedback 45–56).
+A copy of `pr-review-minimal/` from `crabs-exploration` (branch `smg/add-ellipse-params-to-tracks`, tip `9942560`), 2026-11-25. See NOTES.md (at `5b85de2`), "Minimal layout" and feedback 58–61.
 
-| Block | State |
+| Tab | File |
 |---|---|
-| `1-general/` | **Good example.** Approved by the user; follow it for content, style, section links and back-to-top links |
-| `2-review/` | Draft; `1-atomic-branch.md` (commits with weights) `2-difit.md` (how to use the scripts), `3-tests.md`, `4-red-flags.md` |
-| `scripts/` | **Good example.** `review.py` (command, review page server, difit; read-only on git), `comments.py` (comments of a pass, commit→tip lines), `page.html` (the review page), `atomic.py` (branches, `atomic.py extend`), `links.py` (tests mode: link comments between tests and the functions they call). Not tied to this PR |
+| Aim and diagrams | `1-general/1-aim.md` |
+| Atomic branch | `2-review/1-atomic-branch.md` |
+| Review code with difit | `2-review/2-code.md`, `2-review/questions-code.json` |
+| Review tests with difit | `2-review/3-tests.md`, `2-review/questions-tests.json` |
 
-Links like `../../crabs/...` point into the reviewed repo, so they do not resolve here.
-In the Quarto page they go to GitHub through `code-base-url` in `_quarto.yml`.
-Not copied: `_site/`, `.quarto/` (build output), `comments/` (reviewer notes).
+`scripts/` is the full example's, changed for two reviews: test files left out of the code modes (`atomic.is_test`), comments in `comments/code/` and `comments/tests/`, and code items shown in difit's git mode through a commit holding only their files.
+
+Known stale parts: the diagrams, line numbers and atomic commits table are as of `1b9c04f`; the questions were re-anchored at `9942560`.
+
+Links like `../../crabs/...` point into the reviewed repo, so they do not resolve here. Not copied: `_site/`, `.quarto/`, `comments/`.

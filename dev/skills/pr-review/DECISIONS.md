@@ -10,7 +10,7 @@ The final choices behind [SKILL.md](SKILL.md), one line each, with the reason.
 - **Maps and indexes, not judgments.** The reviewer reads the code and decides. The skill only orders the PR and points at what needs a second look.
 - **Minimal layout first** [58]. Four tabs: aim and diagrams, atomic branch, code review, tests review.
     - Left out: signatures, sequence diagram, "predict first", red flags. Each one was extra reading for little gain.
-    - They stay possible extras, in [`example/`](example/README.md).
+    - They stay possible extras, in git history: `git show 5b85de2:dev/skills/pr-review/example/README.md`.
 
 ## Pages
 

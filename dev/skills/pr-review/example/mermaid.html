@@ -4,8 +4,8 @@
   // "loose" lets click lines in diagrams open links
   mermaid.initialize({ startOnLoad: false, securityLevel: "loose" });
 
-  // Draw only visible diagrams: diagrams in hidden tabs come out blank,
-  // so each tab's diagrams are drawn when the tab is first shown
+  // Draw only visible diagrams: diagrams in hidden tabs or closed <details>
+  // come out blank, so they are drawn when first shown
   const draw = () =>
     mermaid.run({
       nodes: [...document.querySelectorAll("pre.mermaid:not([data-processed])")].filter(
@@ -13,5 +13,6 @@
       ),
     });
   document.addEventListener("shown.bs.tab", draw);
+  document.addEventListener("toggle", draw, true); // <details> opened (toggle does not bubble)
   draw();
 </script>

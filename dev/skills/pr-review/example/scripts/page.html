@@ -112,7 +112,7 @@
 
 <script>
 const $ = (id) => document.getElementById(id);
-let state = null;     // from /api/state: mode, pass, items, others
+let state = null;     // from /api/state: review, mode, pass, items, others
 let current = -1;     // index of the item on screen
 
 async function api(path, method = "GET") {
@@ -123,7 +123,7 @@ async function api(path, method = "GET") {
 }
 
 // Items already opened in this pass are greyed out (kept in the browser)
-const seenKey = () => `pr-review-seen:${state.mode}:${state.pass}`;
+const seenKey = () => `pr-review-seen:${state.review}:${state.mode}:${state.pass}`;
 const seen = () => new Set(JSON.parse(localStorage.getItem(seenKey()) || "[]"));
 const markSeen = (name) => localStorage.setItem(seenKey(), JSON.stringify([...seen().add(name)]));
 
@@ -131,7 +131,7 @@ function render() {
   const atomic = state.mode === "atomic";
   const tests = state.mode === "tests";
   document.body.classList.toggle("atomic", atomic);
-  $("heading").textContent = `${state.mode} · pass ${state.pass}`;
+  $("heading").textContent = `${state.review} review · ${state.mode} · pass ${state.pass}`;
   $("items-label").textContent = `${atomic ? "Commits" : tests ? "Steps" : "Items"} (${state.items.length})`;
   $("legend").hidden = !atomic;
 
@@ -140,7 +140,7 @@ function render() {
     const li = document.createElement("li");
     li.className = (i === current ? "on " : "") + (done.has(it.name) ? "seen" : "");
     li.title = it.detail ? `${it.title}\n\n${it.detail}` : it.title;
-    li.innerHTML = `<i class="dot ${it.weight || ""}"></i><span class="num">${i + 1}</span>` +
+    li.innerHTML = `<i class="dot ${it.weight || ""}"></i><span class="num">${it.number}</span>` +
                    `<span class="title ${atomic ? "mono" : ""}"></span><span class="count"></span>`;
     li.querySelector(".title").textContent = atomic ? it.sha.slice(0, 7) : it.title;
     const count = li.querySelector(".count");
@@ -168,13 +168,13 @@ function render() {
   $("message").title = "";
   if ((atomic || tests) && it) {
     $("message").innerHTML = `<span class="mono"></span><span></span>`;
-    $("message").firstChild.textContent = atomic ? it.sha.slice(0, 7) : `Step ${it.step}/${state.items.length}`;
+    $("message").firstChild.textContent = atomic ? it.sha.slice(0, 7) : `Step ${it.number}/${state.items.length}`;
     $("message").lastChild.textContent = it.title;
     $("message").title = it.detail ? `${it.title}\n\n${it.detail}` : it.title;
   }
   $("prev").disabled = current <= 0;
   $("next").disabled = current >= state.items.length - 1;
-  document.title = it ? `${current + 1}. ${it.title} · PR review` : "PR review";
+  document.title = it ? `${it.number}. ${it.title} · ${state.review} review` : "PR review";
 }
 
 async function show(i) {
@@ -248,7 +248,7 @@ document.addEventListener("keydown", (e) => {
 setSidebar(localStorage.getItem("pr-review-nosidebar") === "1");
 (async () => {
   await refresh();
-  if (state) show(state.start);
+  if (state) show(0);
   setInterval(refresh, 3000);
 })();
 </script>

@@ -1,4 +1,4 @@
-"""The comments of one review pass: pr-review/comments/pass-N/comments.json.
+"""The comments of one review pass: comments/<code|tests>/pass-N/comments.json in the package.
 
 The file has three lists of threads: "threads" (open), "resolved" and "deleted".
 A thread is difit's thread (id, messages, createdAt, updatedAt) plus where it sits:

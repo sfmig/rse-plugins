@@ -13,23 +13,15 @@ title: PR review
 
 {{< include 1-general/1-aim.md >}}
 
-{{< include 1-general/2-flow.md >}}
-
-{{< include 1-general/3-signatures.md >}}
-
-{{< include 1-general/4-predict.md >}}
-
 :::
 
 ::: {.section-review}
 
 {{< include 2-review/1-atomic-branch.md >}}
 
-{{< include 2-review/2-difit.md >}}
+{{< include 2-review/2-code.md >}}
 
 {{< include 2-review/3-tests.md >}}
-
-{{< include 2-review/4-red-flags.md >}}
 
 :::
 

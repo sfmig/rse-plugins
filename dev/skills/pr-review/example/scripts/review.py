@@ -1,14 +1,24 @@
 #!/usr/bin/env python3
-"""Review a PR in difit, with the files of a PR review package (the pr-review/ folder).
+"""Review a PR in difit, with the files of a PR review package (this script's parent folder).
 
-  review.py atomic [N|SHA] [--pass N]   one atomic commit at a time, from commit N (or SHA)
-  review.py sessions [N]   [--pass N]   the session plan in 2-review/2-difit.md, from session N
-  review.py tests [N]      [--pass N]   the test steps in 2-review/3-tests.md, from step N
-  review.py all            [--pass N]   the whole PR, like GitHub's "Files changed"
+Two reviews, each with its own passes and preloaded questions:
 
-A review page opens in the browser: the items on the left, the chosen one in difit.
-Each run starts a new pass, saved in comments/pass-N/comments.json; --pass N adds to
-pass N instead. Stop with the page's Stop button or Ctrl+C.
+  code review: the PR without its test files (atomic.is_test)
+    review.py atomic     one atomic commit at a time
+    review.py sessions   the session plan in 2-review/2-code.md
+    review.py all        the whole PR, like GitHub's "Files changed"
+
+  tests review: the test files, with the code they test
+    review.py tests      the test steps in 2-review/3-tests.md
+
+Options:
+  --pass N         add to pass N, instead of starting a new pass
+  --with-tests     code review only: show the test files too (comments stay in the code review)
+  --no-questions   do not add the preloaded questions to the pass
+
+A review page opens in the browser: the items on the left (click one to open it), the chosen one in difit.
+Each run starts a new pass of its review, saved in comments/<code|tests>/pass-N/comments.json.
+Stop with the page's Stop button or Ctrl+C.
 
 Needs difit: npm i -g difit@5.0.12
 """
@@ -32,14 +42,14 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 from urllib.request import urlopen
 
-from atomic import Branches, git, git_ok
+from atomic import Branches, git, git_ok, is_test
 from comments import Pass, TipLines, content, difit_comments
 from links import PREFIX as LINK, test_links
 
-PACKAGE = Path(__file__).resolve().parent.parent  # pr-review/
-COMMENTS = PACKAGE / "comments"
-QUESTIONS = PACKAGE / "2-review" / "questions.json"
-SESSIONS = PACKAGE / "2-review" / "2-difit.md"  # the session plan table
+PACKAGE = Path(__file__).resolve().parent.parent  # the review package folder
+COMMENTS = PACKAGE / "comments"  # comments/code/pass-N/, comments/tests/pass-N/
+QUESTIONS = PACKAGE / "2-review"  # questions-code.json, questions-tests.json
+SESSIONS = PACKAGE / "2-review" / "2-code.md"  # the session plan table
 TESTS = PACKAGE / "2-review" / "3-tests.md"  # the test steps table
 COMMIT_LIST = (
     PACKAGE / "2-review" / "1-atomic-branch.md"
@@ -54,16 +64,14 @@ class Item:
 
     name: str  # e.g. atomic-05-501a731, sessions-02, tests-03, all
     title: str
-    args: list  # what difit shows: a commit, two revisions, or "-" (a diff on stdin)
+    number: int  # the commit, session or step number in the package's tables
     sha: str = None  # atomic commit
-    files: set = None  # the files of a session (None: all files)
+    files: set = None  # the files the item shows
     detail: str = ""  # the rest of the commit message
     weight: str = None  # high, med or low (atomic commits)
-    step: int = None  # the step number (tests mode)
     links: list = field(default_factory=list)  # test <-> function links (tests mode)
-    diff: str = field(
-        default=None, repr=False
-    )  # the diff of a session, sent on stdin
+    revs: tuple = None  # what difit shows in git mode: (target, base)
+    diff: str = field(default="", repr=False)  # or a diff sent on stdin (tests mode)
 
 
 def weights():
@@ -79,12 +87,15 @@ def weights():
     return {m.group(1): m.group(2) for m in found if m}
 
 
-def atomic_items(b):
+def atomic_items(b, with_tests=False):
     w = weights()
     items = []
     for n, sha in enumerate(
         git("rev-list", "--reverse", f"{b.base}..{b.atomic}").split(), 1
     ):
+        files = code_files(f"{sha}^", sha, with_tests)
+        if not files:  # a commit of tests only: in the tests review
+            continue
         message = [
             x
             for x in git("log", "-1", "--format=%B", sha).splitlines()
@@ -95,16 +106,74 @@ def atomic_items(b):
             Item(
                 f"atomic-{n:02d}-{sha[:7]}",
                 message[0],
-                [sha],
+                n,
                 sha=sha,
+                files=set(files),
                 detail="\n".join(message[1:]).strip(),
                 weight=weight,
+                revs=only(files, sha, f"{sha}^"),
             )
         )
     return items
 
 
-def session_items(b):
+def changed_files(a, b):
+    """The paths the diff a..b touches (both names of a renamed file)."""
+    return [
+        p
+        for row in git("diff", "--name-status", "-M", a, b).splitlines()
+        for p in row.split("\t")[1:]
+    ]
+
+
+def code_files(a, b, with_tests=False):
+    """The paths the diff a..b touches, without the test files (unless with_tests)."""
+    return [p for p in changed_files(a, b) if with_tests or not is_test(p)]
+
+
+def diff_of(a, b, files, *options):
+    return git("diff", "-M", *options, a, b, "--", *files) + "\n"
+
+
+def only(files, rev, base):
+    """(commit, base) for difit's git mode, showing only `files` of the diff base..rev.
+
+    difit has no path filter in git mode, and turns off "Open in editor" for a diff
+    on stdin. So this makes a commit with base's files, except `files` as in rev, and
+    returns it with base. No branch points to the commit: git drops it in a later gc.
+    The lines of `files` are the same as in rev, so comments land on rev's lines.
+    """
+    base_sha, rev_sha = git("rev-parse", base), git("rev-parse", rev)
+    if set(files) >= set(changed_files(base_sha, rev_sha)):
+        return (rev_sha, base_sha)  # nothing to leave out
+    with tempfile.TemporaryDirectory() as tmp:
+        env = {**os.environ, "GIT_INDEX_FILE": str(Path(tmp) / "index")}
+        run = lambda *args, **kw: subprocess.run(
+            ["git", *args], env=env, capture_output=True, text=True, check=True, **kw
+        ).stdout.strip()
+        run("read-tree", base_sha)
+        entries, kept = [], set()
+        for row in run("ls-tree", "-r", rev_sha, "--", *files).splitlines():
+            info, path = row.split("\t", 1)  # "mode type sha", path
+            mode, _, sha = info.split()
+            entries.append(f"{mode} {sha}\t{path}")
+            kept.add(path)
+        # files not in rev (deleted, or renamed away): remove them
+        entries += [f"0 {'0' * 40}\t{path}" for path in set(files) - kept]
+        run("update-index", "--index-info", input="\n".join(entries) + "\n")
+        tree = run("write-tree")
+        commit = run("commit-tree", tree, "-p", base_sha, "-m", f"review: part of {rev_sha[:7]}")
+    return (commit, base_sha)
+
+
+def whole_pr_item(b, with_tests=False):
+    files = code_files(b.base, b.branch, with_tests)
+    title = "Whole PR" if with_tests else "Whole PR, without tests"
+    return Item("all", title, 1, files=set(files),
+                revs=only(files, b.branch, b.base))
+
+
+def session_items(b, with_tests=False):
     """One item per row of the session table (rows that end in a checkbox)."""
     rows = [
         r
@@ -116,17 +185,20 @@ def session_items(b):
         files = [
             p
             for p in re.findall(r"`([^`]*)`", row)
-            if git_ok("cat-file", "-e", f"{b.base}:{p}")
-            or git_ok("cat-file", "-e", f"{b.branch}:{p}")
+            if (with_tests or not is_test(p))
+            and (
+                git_ok("cat-file", "-e", f"{b.base}:{p}")
+                or git_ok("cat-file", "-e", f"{b.branch}:{p}")
+            )
         ]
         items.append(
             Item(
                 f"sessions-{n:02d}",
                 f"Session {n}",
-                ["-"],
+                n,
                 files=set(files),
                 detail="\n".join(files),
-                diff=git("diff", "-M", b.base, b.branch, "--", *files) + "\n",
+                revs=only(files, b.branch, b.base),
             )
         )
     return items
@@ -151,22 +223,22 @@ def test_items(b):
             or git_ok("cat-file", "-e", f"{b.branch}:{p}")
         ]
         n = int(step)
-        diff = (
-            git("diff", "-M", "--function-context", b.base, b.branch, "--", *files)
-            + "\n"
-        )
+        diff = diff_of(b.base, b.branch, files, "--function-context")
         items.append(
             Item(
                 f"tests-{n:02d}",
                 title.replace("`", ""),
-                ["-"],
+                n,
                 files=set(files),
                 detail="\n".join(files),
-                step=n,
                 links=test_links(diff, files, b.branch),
                 diff=diff,
             )
         )
+    stepped = set().union(*(it.files for it in items))
+    missing = [p for p in changed_files(b.base, b.branch) if is_test(p) and p not in stepped]
+    if missing:
+        print("Note: changed test files in no step of the table:\n  " + "\n  ".join(missing))
     return items
 
 
@@ -188,12 +260,7 @@ def first_changes(diff):
 
 def files_of(item):
     """The files of an item, each with its first changed line (for the editor list)."""
-    if item.diff:
-        diff = item.diff
-    elif item.sha:
-        diff = git("diff", "-U0", f"{item.sha}^", item.sha)
-    else:  # the whole PR: args are [branch, base]
-        diff = git("diff", "-U0", "-M", item.args[1], item.args[0])
+    diff = item.diff or git("diff", "-U0", "-M", item.revs[1], item.revs[0])
     return [{"file": p, "line": n} for p, n in first_changes(diff)]
 
 
@@ -218,7 +285,7 @@ class Difit:
         self.url = f"http://localhost:{free_port()}"
         args = [
             "difit",
-            *item.args,
+            *(item.revs or ["-"]),  # git mode, or the diff on stdin
             "--port",
             self.url.rsplit(":", 1)[1],
             "--no-open",
@@ -267,13 +334,13 @@ class Difit:
 class Review:
     """The items, the pass, and the one difit server showing the chosen item."""
 
-    def __init__(self, mode, items, comments, pass_no, start):
-        self.mode, self.items, self.comments, self.pass_no, self.start = (
+    def __init__(self, review, mode, items, comments, pass_no):
+        self.review, self.mode, self.items, self.comments, self.pass_no = (
+            review,
             mode,
             items,
             comments,
             pass_no,
-            start,
         )
         self.shown = None  # (item, Difit) on screen
         self.lock = threading.Lock()
@@ -322,9 +389,9 @@ class Review:
                 }
             )
         return {
+            "review": self.review,
             "mode": self.mode,
             "pass": self.pass_no,
-            "start": self.start,
             "others": others,
             "othersTitle": "Only on the whole PR"
             if atomic
@@ -336,7 +403,7 @@ class Review:
                     "detail": it.detail,
                     "weight": it.weight,
                     "sha": it.sha,
-                    "step": it.step,
+                    "number": it.number,
                     "threads": len(self.comments.shown_on(it.sha, it.files)),
                 }
                 for it in self.items
@@ -419,41 +486,25 @@ def serve(review, stopped):
 
 
 # ------------------------------------------------------------------ main
-def passes():
-    """{number: comments.json} of the passes so far."""
+def passes(folder):
+    """{number: comments.json} of the passes of one review so far."""
     return {
         int(d.name[5:]): d / "comments.json"
-        for d in COMMENTS.glob("pass-*")
+        for d in folder.glob("pass-*")
         if d.name[5:].isdigit()
     }
 
-
-def start_index(start, items):
-    """Item number N (from 1), or an atomic commit's hash, as an index."""
-    if not start:
-        return 0
-    if start.isdigit() and len(start) < 7:
-        i = int(start) - 1
-    else:
-        full = git(
-            "rev-parse",
-            "--verify",
-            "--quiet",
-            f"{start}^{{commit}}",
-            check=False,
-        )
-        i = next((n for n, it in enumerate(items) if it.sha == full), -1)
-    if not 0 <= i < len(items):
-        sys.exit(f"No item {start}: there are {len(items)}.")
-    return i
 
 
 def main():
     p = argparse.ArgumentParser(usage=__doc__, add_help=False)
     p.add_argument("mode", choices=["atomic", "sessions", "tests", "all"])
-    p.add_argument("start", nargs="?")
     p.add_argument("--pass", dest="pass_no", type=int)
+    p.add_argument("--with-tests", action="store_true")
+    p.add_argument("--no-questions", action="store_true")
     args = p.parse_args()
+    if args.with_tests and args.mode == "tests":
+        sys.exit("--with-tests is for the code review (atomic, sessions, all).")
     sys.stdout.reconfigure(
         line_buffering=True
     )  # print each line at once, also into a log
@@ -462,43 +513,52 @@ def main():
     if not shutil.which("difit"):
         sys.exit("difit is not installed: npm i -g difit@5.0.12")
 
-    # Commit lines can only be followed to the tip if the atomic branch has the PR's files
+    review = "tests" if args.mode == "tests" else "code"
+    folder = COMMENTS / review
+
+    # Commit lines can only be followed to the tip if the atomic branch has the PR's files.
+    # The tests review has no commits: its comments are all at the tip.
     tip_lines = None
-    if b.has_atomic() and b.atomic_up_to_date():
+    if review == "tests":
+        pass
+    elif b.has_atomic() and b.atomic_up_to_date():
         tip_lines = TipLines(b.base, git("rev-parse", b.atomic))
     elif b.has_atomic():
         print(
             f"Note: {b.atomic} is behind {b.branch}, so comments written on a commit are not shown at the tip.\n"
-            "      To update it: pr-review/scripts/atomic.py extend"
+            f"      To update it: {PACKAGE.name}/scripts/atomic.py extend"
         )
     elif args.mode == "atomic":
         sys.exit(
             f"No branch {b.atomic}: ask the agent to build the atomic branch first."
         )
 
-    found = passes()
+    found = passes(folder)
     if args.pass_no is not None and args.pass_no not in found:
         sys.exit(f"No pass {args.pass_no}. Passes: {sorted(found) or 'none'}")
     pass_no = (
         args.pass_no if args.pass_no is not None else max(found, default=0) + 1
     )
-    comments = Pass(COMMENTS / f"pass-{pass_no}" / "comments.json", tip_lines)
-    if QUESTIONS.exists():
+    comments = Pass(folder / f"pass-{pass_no}" / "comments.json", tip_lines)
+    questions = QUESTIONS / f"questions-{review}.json"
+    if questions.exists() and not args.no_questions:
         earlier = [
             Pass(path, None)
             for n, path in found.items()
             if n != pass_no and path.exists()
         ]
-        comments.add_questions(json.loads(QUESTIONS.read_text()), earlier)
+        comments.add_questions(json.loads(questions.read_text()), earlier)
 
-    items = {
-        "atomic": atomic_items,
-        "sessions": session_items,
-        "tests": test_items,
-        "all": lambda b: [Item("all", "Whole PR", [b.branch, b.base])],
-    }[args.mode](b)
+    if args.mode == "tests":
+        items = test_items(b)
+    else:
+        items = {
+            "atomic": atomic_items,
+            "sessions": session_items,
+            "all": lambda b, t: [whole_pr_item(b, t)],
+        }[args.mode](b, args.with_tests)
     review = Review(
-        args.mode, items, comments, pass_no, start_index(args.start, items)
+        review, args.mode, items, comments, pass_no
     )
 
     stopped = threading.Event()
@@ -507,7 +567,7 @@ def main():
     httpd = serve(review, stopped)
     url = f"http://localhost:{httpd.server_address[1]}/"
     print(
-        f"Pass {pass_no}: {comments.path.relative_to(PACKAGE.parent)}\nReview page: {url}\n"
+        f"{review.review.capitalize()} review, pass {pass_no}: {comments.path.relative_to(PACKAGE.parent)}\nReview page: {url}\n"
         "Stop with the page's Stop button or Ctrl+C."
     )
     if not os.environ.get("REVIEW_NO_BROWSER"):

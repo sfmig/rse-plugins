@@ -14,6 +14,7 @@ import os
 import subprocess
 import sys
 from dataclasses import dataclass
+from pathlib import PurePosixPath
 
 
 def git(*args, check=True):
@@ -25,6 +26,17 @@ def git(*args, check=True):
 
 def git_ok(*args):
     return subprocess.run(["git", *args], capture_output=True).returncode == 0
+
+
+def is_test(path):
+    """A test file: in a tests/ folder, or named test_*.py, *_test.py or conftest.py."""
+    p = PurePosixPath(path)
+    return (
+        "tests" in p.parts[:-1]
+        or p.name.startswith("test_")
+        or p.name.endswith("_test.py")
+        or p.name == "conftest.py"
+    )
 
 
 @dataclass

@@ -5,7 +5,7 @@
 
 Run from inside the reviewed repo, with the PR branch checked out. It copies the
 files that are the same for every PR (the Quarto page and the difit scripts) from
-example-minimal/, and 2-review/2-code.md with its session table emptied. The pages
+example/, and 2-review/2-code.md with its session table emptied. The pages
 that describe the PR are left for the agent to write.
 
 It also:
@@ -21,7 +21,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-EXAMPLE = Path(__file__).resolve().parent.parent / "example-minimal"
+EXAMPLE = Path(__file__).resolve().parent.parent / "example"
 EXAMPLE_NAME = "pr-review-minimal"  # the folder name the example's pages use
 FIXED = [
     "_quarto.yml", "index.qmd", "styles.css", "tab-sections.lua", "gh-alerts.lua",

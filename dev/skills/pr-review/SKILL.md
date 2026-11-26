@@ -17,7 +17,7 @@ If that is empty, use the checked-out branch. If that is the main branch, ask th
 
 Build **maps and indexes** of the PR, not judgments. The reviewer reads the code and decides. This skill only puts the PR in an order they can follow, and points at what deserves a second look.
 
-The output is a folder in the reviewed repo, by default `pr-review/`. [`example-minimal/`](example-minimal/README.md) is a complete package for a real PR: **use it as the model for every page**, for content, level of detail and format. [DECISIONS.md](DECISIONS.md) records why each choice was made; read it when a rule here seems arbitrary.
+The output is a folder in the reviewed repo, by default `pr-review/`. [`example/`](example/README.md) is a complete package for a real PR: **use it as the model for every page**, for content, level of detail and format. [DECISIONS.md](DECISIONS.md) records why each choice was made; read it when a rule here seems arbitrary.
 
 ## Ground rules
 
@@ -60,11 +60,11 @@ If the PR branch gains commits later, the package's `scripts/atomic.py extend` a
 ${CLAUDE_SKILL_DIR}/scripts/init_package.py [folder]     # default: pr-review
 ```
 
-It copies the fixed files from `example-minimal/` (the Quarto page, the difit scripts, `2-review/2-code.md` with an empty session table), pins `code-base-url` to the branch tip on GitHub, and adds the folder to `.git/info/exclude`. It stops if the folder exists: then ask the user whether to replace it or use another name.
+It copies the fixed files from `example/` (the Quarto page, the difit scripts, `2-review/2-code.md` with an empty session table), pins `code-base-url` to the branch tip on GitHub, and adds the folder to `.git/info/exclude`. It stops if the folder exists: then ask the user whether to replace it or use another name.
 
 ### 4. Write the pages
 
-Four pages, one tab each. Write each one after its counterpart in `example-minimal/`, replacing every PR-specific part. Use the package's folder name in commands (`pr-review/scripts/review.py`, not `pr-review-minimal/…`).
+Four pages, one tab each. Write each one after its counterpart in `example/`, replacing every PR-specific part. Use the package's folder name in commands (`pr-review/scripts/review.py`, not `pr-review-minimal/…`).
 
 | Tab | File | Write |
 |---|---|---|
