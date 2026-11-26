@@ -9,8 +9,8 @@ A review package for a PR in `crabs-exploration` (branch `smg/add-ellipse-params
 | Review code with difit | `2-review/2-code.md`, `2-review/questions-code.json` |
 | Review tests with difit | `2-review/3-tests.md`, `2-review/questions-tests.json` |
 
-`scripts/` is the full example's, changed for two reviews: test files left out of the code modes (`atomic.is_test`), comments in `comments/code/` and `comments/tests/`, and code items shown in difit's git mode through a commit holding only their files.
+Only the pages that describe the PR are here. `init_package.py` adds the rest to each package: the Quarto page from [`../template/`](../template/) and the difit scripts from [`../scripts/package/`](../scripts/package/).
 
 Known stale parts: the diagrams, line numbers and atomic commits table are as of `1b9c04f`; the questions were re-anchored at `9942560`.
 
-Links like `../../crabs/...` point into the reviewed repo, so they do not resolve here. Not copied: `_site/`, `.quarto/`, `comments/`.
+Links like `../../crabs/...` point into the reviewed repo, so they do not resolve here. The package's `code-base-url` was `https://github.com/SainsburyWellcomeCentre/crabs-exploration/blob/1b9c04f9c0860b94912ca4d11730964029235ca2/`. Not copied: `_site/`, `.quarto/`, `comments/`.

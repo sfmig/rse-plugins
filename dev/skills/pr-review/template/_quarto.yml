@@ -6,7 +6,7 @@ project:
   output-dir: _site
 
 # Links like ../crabs/... in the .md files point here instead
-code-base-url: https://github.com/SainsburyWellcomeCentre/crabs-exploration/blob/1b9c04f9c0860b94912ca4d11730964029235ca2/
+code-base-url: TODO  # set by init_package.py to the PR tip on GitHub
 
 format:
   html:

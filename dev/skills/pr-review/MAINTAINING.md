@@ -1,13 +1,13 @@
 # pr-review: maintaining the fixed files
 
-Facts and traps for changing the files `init_package.py` copies from [`example/`](example/README.md): the difit scripts and the Quarto page.
+Facts and traps for changing the files `init_package.py` copies into each package: the difit scripts in [`scripts/package/`](scripts/package/) and the Quarto page in [`template/`](template/).
 
 - Running the skill does not need this file. The reasons behind the design are in [DECISIONS.md](DECISIONS.md).
 - Checked with difit 5.0.12, Quarto 1.9.37 and mermaid 11.4.1.
 
 ## difit
 
-What `scripts/` relies on, checked in the difit 5.0.12 source:
+What `scripts/package/` relies on, checked in the difit 5.0.12 source:
 
 | Fact | Used by |
 |---|---|

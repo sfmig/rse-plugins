@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Start a PR review package in the reviewed repo, from example/.
+"""Start a PR review package in the reviewed repo.
 
     init_package.py [FOLDER]    (default: pr-review, at the repo root)
 
 Run from inside the reviewed repo, with the PR branch checked out. It copies the
-files that are the same for every PR (the Quarto page and the difit scripts) from
-example/, and 2-review/2-code.md with its session table emptied. The pages
-that describe the PR are left for the agent to write.
+files that are the same for every PR: the Quarto page from template/, the difit
+scripts from scripts/package/, and example/2-review/2-code.md with its session
+table emptied. The pages that describe the PR are left for the agent to write.
 
 It also:
   * points code-base-url in _quarto.yml at the branch tip on GitHub, if origin is there;
@@ -21,14 +21,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-EXAMPLE = Path(__file__).resolve().parent.parent / "example"
+SKILL = Path(__file__).resolve().parent.parent
+TEMPLATE = SKILL / "template"  # the Quarto page, copied as it is
+SCRIPTS = SKILL / "scripts" / "package"  # copied to the package's scripts/
+EXAMPLE = SKILL / "example"  # 2-review/2-code.md is taken from it
 EXAMPLE_NAME = "pr-review"  # the folder name the example's pages use
-FIXED = [
-    "_quarto.yml", "index.qmd", "styles.css", "tab-sections.lua", "gh-alerts.lua",
-    "mermaid.lua", "mermaid.html", ".gitignore",
-    "scripts/review.py", "scripts/atomic.py", "scripts/comments.py",
-    "scripts/links.py", "scripts/page.html",
-]
 SESSION_ROW = re.compile(r"^\|.*\| *\[[ x]\] *\|$")
 
 
@@ -55,9 +52,8 @@ def main():
     if target.exists():
         sys.exit(f"{target} exists: choose another folder, or remove it first.")
 
-    for rel in FIXED:
-        (target / rel).parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(EXAMPLE / rel, target / rel)
+    shutil.copytree(TEMPLATE, target)
+    shutil.copytree(SCRIPTS, target / "scripts", ignore=shutil.ignore_patterns("__pycache__"))
     (target / "1-general").mkdir()
     (target / "2-review").mkdir()
 
