@@ -45,3 +45,37 @@ The folder is ignored locally, so it is never committed.
 | `tests.md` | The steps of the tests review, with each file tagged `code:` or `test:`. The `test:` files are left out of the code review. Edit the tags to move a file between the two reviews |
 | `questions-code.json`, `questions-tests.json` | The preloaded questions |
 | `comments/` | One `comments.json` per pass |
+
+
+## Under the hood
+
+```mermaid
+flowchart TD
+    subgraph legend [Legend]
+        LA["Claude judges"]:::agent
+        LS["script"]:::script
+        LU["you"]:::user
+    end
+
+    PR(["PR branch"]) --> F["facts.py<br/>commits, files, test guess"]:::script
+    F --> T["which files are tests<br/>asks you if unsure"]:::agent
+    T --> G["group the commits<br/>plan.json"]:::agent
+    G --> BA["build_atomic.py<br/>zero-diff check"]:::script
+    BA --> AB(["branch-atomic, local"])
+    AB --> W["write tests.md, questions,<br/>overview.md"]:::agent
+    W --> RC["review.py atomic or all<br/>code review, no test files"]:::script
+    RC --> U["review in difit<br/>starts on the overview"]:::user
+    U --> RT["review.py tests<br/>tests next to their code"]:::script
+    RT --> U
+    U --> CM(["comments/code/pass-N<br/>comments/tests/pass-N"])
+    CM --> A["answer<br/>replies in comments.json"]:::agent
+    A --> RC
+    PR -. new commits .-> EX["extend<br/>atomic.py extend"]:::script
+    EX -.-> AB
+
+    classDef agent fill:#fff3cd,stroke:#b8860b,color:#000
+    classDef script fill:#d4edda,stroke:#2e7d32,color:#000
+    classDef user fill:#d6e4f5,stroke:#1f5fa8,color:#000
+```
+
+Rounded boxes are what the steps make. Dotted arrows: when the PR branch gains commits. If `<branch>-atomic` exists, a run skips straight to the review.
