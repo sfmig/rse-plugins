@@ -1,0 +1,38 @@
+[
+ {
+  "type": "thread",
+  "filePath": "crabs/mask/utils/bbox_prompts.py",
+  "position": {
+   "side": "new",
+   "line": 202
+  },
+  "body": "Q1: Rerun with --zarr_mode_group a: does this box append fail on an existing position? UNSURE"
+ },
+ {
+  "type": "thread",
+  "filePath": "crabs/mask/mask_video.py",
+  "position": {
+   "side": "new",
+   "line": 511
+  },
+  "body": "Q2: Both clip length checks trust the header total_frames (368, 511); is it exact?"
+ },
+ {
+  "type": "thread",
+  "filePath": "crabs/mask/mask_props.py",
+  "position": {
+   "side": "new",
+   "line": 236
+  },
+  "body": "Q3: A crash after del group[var] leaves the group without its 8 variables, or NaN-filled; detectable later?"
+ },
+ {
+  "type": "thread",
+  "filePath": "crabs/utils/io.py",
+  "position": {
+   "side": "new",
+   "line": 17
+  },
+  "body": "Q4: 300 s per read timeout: worst-case hang per job acceptable?"
+ }
+]

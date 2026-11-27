@@ -1,0 +1,22 @@
+project:
+  type: default
+  # Render only the tab page; the .md files stay plain markdown
+  render:
+    - index.qmd
+  output-dir: _site
+
+# Links like ../crabs/... in the .md files point here instead
+code-base-url: TODO  # set by init_package.py to the PR tip on GitHub
+
+format:
+  html:
+    title: PR review
+    page-layout: full
+    toc: false
+    css: styles.css
+    filters:
+      - at: pre-ast
+        path: tab-sections.lua
+      - gh-alerts.lua
+      - mermaid.lua
+    include-after-body: mermaid.html

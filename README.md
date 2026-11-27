@@ -22,12 +22,13 @@ The skills in this plugin aim to support developers that write software for rese
 - Keep a human in the loop.
 - Show it visually first. Wherever they fit, documents use mermaid diagrams, signatures, diffs and tables rather than paragraphs. 
 
-Currently, the plugin has two workflows:
+Currently, the plugin has three workflows:
 
 | Skill | What it does |
 |---|---|
 | `proposal` | Given a feature request, it researches a codebase and writes a proposal for you to review |
 | `discuss` | Answers your questions about a proposal, refines it with your agreement, and finally hands it to an agent to implement. |
+| `pr-review` (draft) | Builds a review package for a large PR: aim and diagrams, an atomic copy of the branch, and two difit reviews (code, then tests) with preloaded questions. |
 
 
 You can start a workflow explicitly with `/dev:<skill>` (e.g. `/dev:proposal`). The main Claude agent can also start one itself when the conversation matches the skill's `when_to_use` description.
@@ -141,6 +142,8 @@ then, in Claude Code:
 You can also run `/plugin` and pick the plugins from the **Discover** tab. Run `/reload-plugins` (or start a new session) to load them. 
 
 In the chat interface, you can click `/` and select "Manage plugins" > select the Marketplaces tab, and paste the path to the `rse-plugins` clone.
+
+Some skills need tools of their own: `pr-review` needs [uv](https://docs.astral.sh/uv/) and difit (see [its requirements](dev/skills/pr-review/README.md#requirements)).
 
 
 ## Contributing

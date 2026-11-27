@@ -1,0 +1,6 @@
+_site/
+.quarto/
+comments/*.diff
+
+/.quarto/
+**/*.quarto_ipynb
